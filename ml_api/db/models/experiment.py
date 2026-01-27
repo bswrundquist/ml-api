@@ -1,4 +1,5 @@
 """Experiment database model."""
+
 import enum
 import uuid
 from datetime import datetime
@@ -18,12 +19,14 @@ if TYPE_CHECKING:
 
 class TaskType(str, enum.Enum):
     """ML task types."""
+
     CLASSIFICATION = "classification"
     REGRESSION = "regression"
 
 
 class ModelType(str, enum.Enum):
     """Supported model types."""
+
     CATBOOST = "catboost"
     XGBOOST = "xgboost"
     LIGHTGBM = "lightgbm"
@@ -31,6 +34,7 @@ class ModelType(str, enum.Enum):
 
 class ExperimentStatus(str, enum.Enum):
     """Experiment execution status."""
+
     PENDING = "pending"
     RUNNING = "running"
     SUCCEEDED = "succeeded"

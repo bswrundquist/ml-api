@@ -1,4 +1,5 @@
 """DataSplit database model."""
+
 import enum
 import uuid
 from datetime import datetime
@@ -16,6 +17,7 @@ if TYPE_CHECKING:
 
 class SplitStrategy(str, enum.Enum):
     """Split strategy types."""
+
     RANDOM = "random"
     TIME_BASED = "time_based"
     ENTITY_BASED = "entity_based"
@@ -23,6 +25,7 @@ class SplitStrategy(str, enum.Enum):
 
 class SplitStatus(str, enum.Enum):
     """Split processing status."""
+
     PENDING = "pending"
     READY = "ready"
     FAILED = "failed"

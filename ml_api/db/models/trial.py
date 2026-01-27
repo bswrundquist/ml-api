@@ -1,10 +1,11 @@
 """Trial database model."""
+
 import enum
 import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import String, Integer, Text, Enum, ForeignKey, Index, JSON
+from sqlalchemy import Integer, Text, Enum, ForeignKey, Index, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 
@@ -16,6 +17,7 @@ if TYPE_CHECKING:
 
 class TrialStatus(str, enum.Enum):
     """Trial execution status."""
+
     RUNNING = "running"
     COMPLETED = "completed"
     PRUNED = "pruned"

@@ -45,11 +45,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PROJECT_SUMMARY.md with architecture overview
 
 ### Development
-- Poetry dependency management
+- uv for fast dependency management
 - Black + Ruff for code formatting and linting
 - mypy for type checking
 - pytest for testing
-- GitHub Actions CI/CD workflows
+- GitHub Actions CI/CD workflows powered by uv
 
 ## Release Notes
 

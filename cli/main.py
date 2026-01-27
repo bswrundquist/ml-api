@@ -4,7 +4,7 @@ from typing import Optional
 import uvicorn
 
 app = typer.Typer(
-    name="mlapi",
+    name="ml-api",
     help="ML API Command Line Interface",
     add_completion=False,
 )
@@ -31,13 +31,13 @@ def serve(
 
     Examples:
 
-        mlapi serve --workers 4 --port 8000
+        ml-api serve --workers 4 --port 8000
 
-        mlapi serve --reload --log-level debug
+        ml-api serve --reload --log-level debug
 
-        mlapi serve --workers 4 --proxy-headers --forwarded-allow-ips="127.0.0.1,10.0.0.0/8"
+        ml-api serve --workers 4 --proxy-headers --forwarded-allow-ips="127.0.0.1,10.0.0.0/8"
 
-        mlapi serve --ssl-keyfile key.pem --ssl-certfile cert.pem
+        ml-api serve --ssl-keyfile key.pem --ssl-certfile cert.pem
     """
     typer.echo(f"Starting ML API server on {host}:{port} with {workers} worker(s)...")
 

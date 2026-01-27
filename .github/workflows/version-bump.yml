@@ -46,65 +46,49 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Install bump-my-version
-        run: uv pip install bump-my-version
-
       - name: Bump version
         id: bump
         run: |
-          # Get current version from pyproject.toml
-          CURRENT_VERSION=$(grep -Po '(?<=^version = ")[^"]*' pyproject.toml)
+          # Get current version
+          CURRENT_VERSION=$(grep -m1 'version = ' pyproject.toml | cut -d'"' -f2)
           echo "Current version: $CURRENT_VERSION"
 
-          # Bump version based on input using Python's packaging library
-          uv pip install packaging
-          NEW_VERSION=$(python -c "
-          from packaging import version
-          import sys
+          # Bump version using awk (similar to Makefile)
+          BUMP_TYPE="${{ inputs.version }}"
 
-          current = version.parse('$CURRENT_VERSION')
-          bump_type = '${{ inputs.version }}'
-
-          if bump_type == 'major':
-              new = f'{current.major + 1}.0.0'
-          elif bump_type == 'minor':
-              new = f'{current.major}.{current.minor + 1}.0'
-          elif bump_type == 'patch':
-              new = f'{current.major}.{current.minor}.{current.micro + 1}'
-          elif bump_type == 'premajor':
-              new = f'{current.major + 1}.0.0${{ inputs.prerelease_type }}0'
-          elif bump_type == 'preminor':
-              new = f'{current.major}.{current.minor + 1}.0${{ inputs.prerelease_type }}0'
-          elif bump_type == 'prepatch':
-              new = f'{current.major}.{current.minor}.{current.micro + 1}${{ inputs.prerelease_type }}0'
-          elif bump_type == 'prerelease':
-              # Increment prerelease number
-              if current.pre:
-                  new = f'{current.major}.{current.minor}.{current.micro}{current.pre[0]}{current.pre[1] + 1}'
-              else:
-                  new = f'{current.major}.{current.minor}.{current.micro}${{ inputs.prerelease_type }}0'
-          else:
-              new = current
-
-          print(new)
-          ")
+          # Calculate new version
+          case "$BUMP_TYPE" in
+            patch)
+              NEW_VERSION=$(echo $CURRENT_VERSION | awk -F. '{print $1"."$2"."$3+1}')
+              ;;
+            minor)
+              NEW_VERSION=$(echo $CURRENT_VERSION | awk -F. '{print $1"."$2+1".0"}')
+              ;;
+            major)
+              NEW_VERSION=$(echo $CURRENT_VERSION | awk -F. '{print $1+1".0.0"}')
+              ;;
+            pre*)
+              echo "Warning: Pre-release versions not yet supported"
+              echo "Falling back to patch bump"
+              NEW_VERSION=$(echo $CURRENT_VERSION | awk -F. '{print $1"."$2"."$3+1}')
+              ;;
+            *)
+              echo "Error: Invalid bump type: $BUMP_TYPE"
+              exit 1
+              ;;
+          esac
 
           echo "New version: $NEW_VERSION"
 
           # Update version in pyproject.toml
-          sed -i "s/^version = .*/version = \"$NEW_VERSION\"/" pyproject.toml
+          sed -i "s/^version = \".*\"/version = \"$NEW_VERSION\"/" pyproject.toml
+
+          # Update version in app/__init__.py
+          sed -i "s/__version__ = \".*\"/__version__ = \"$NEW_VERSION\"/" app/__init__.py
 
           # Export for later steps
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
-
-      - name: Update __init__.py with version
-        run: |
-          mkdir -p app
-          cat > app/__init__.py << EOF
-          """ML API application."""
-          __version__ = "${{ steps.bump.outputs.new_version }}"
-          EOF
 
       - name: Update CHANGELOG.md
         run: |

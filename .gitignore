@@ -29,8 +29,8 @@ ENV/
 env/
 .venv
 
-# Poetry
-poetry.lock
+# uv
+# uv.lock - Keep this file committed for reproducible builds
 
 # PyInstaller
 *.manifest

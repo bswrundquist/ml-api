@@ -1,232 +1,289 @@
-.PHONY: help install test lint format clean build publish docker run
+.PHONY: help install install-dev sync test lint format format-check check clean build
+.PHONY: version release release-patch release-minor release-major publish-test publish info
+.PHONY: dev worker db-upgrade db-downgrade db-migrate docker-build docker-run
 
-# Variables
-PYTHON := poetry run python
-PYTEST := poetry run pytest
-BLACK := poetry run black
-RUFF := poetry run ruff
-MYPY := poetry run mypy
+# Extract current version from pyproject.toml
+VERSION := $(shell grep -m1 'version = ' pyproject.toml | cut -d'"' -f2)
+
+# Default target
+.DEFAULT_GOAL := help
+
+# Colors for output
+CYAN := \033[0;36m
+GREEN := \033[0;32m
+YELLOW := \033[0;33m
+RED := \033[0;31m
+NC := \033[0m # No Color
 
 help: ## Show this help message
-	@echo 'Usage: make [target]'
-	@echo ''
-	@echo 'Available targets:'
-	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-20s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@echo "$(CYAN)ML API - Makefile Commands$(NC)"
+	@echo ""
+	@echo "$(GREEN)Setup:$(NC)"
+	@echo "  $(CYAN)make install$(NC)          Install production dependencies"
+	@echo "  $(CYAN)make install-dev$(NC)      Install development dependencies"
+	@echo "  $(CYAN)make sync$(NC)             Install/sync dependencies with uv"
+	@echo ""
+	@echo "$(GREEN)Code Quality:$(NC)"
+	@echo "  $(CYAN)make lint$(NC)             Run linter (ruff)"
+	@echo "  $(CYAN)make format$(NC)           Format code (black + ruff)"
+	@echo "  $(CYAN)make format-check$(NC)     Check formatting without changes"
+	@echo "  $(CYAN)make check$(NC)            Run all checks (format + lint)"
+	@echo ""
+	@echo "$(GREEN)Testing:$(NC)"
+	@echo "  $(CYAN)make test$(NC)             Run tests with coverage"
+	@echo ""
+	@echo "$(GREEN)Development:$(NC)"
+	@echo "  $(CYAN)make dev$(NC)              Run development server"
+	@echo "  $(CYAN)make worker$(NC)           Run background worker"
+	@echo ""
+	@echo "$(GREEN)Database:$(NC)"
+	@echo "  $(CYAN)make db-upgrade$(NC)       Run database migrations"
+	@echo "  $(CYAN)make db-downgrade$(NC)     Rollback last migration"
+	@echo "  $(CYAN)make db-migrate$(NC)       Create new migration"
+	@echo ""
+	@echo "$(GREEN)Build:$(NC)"
+	@echo "  $(CYAN)make build$(NC)            Build distribution packages"
+	@echo "  $(CYAN)make clean$(NC)            Clean build artifacts"
+	@echo ""
+	@echo "$(GREEN)Docker:$(NC)"
+	@echo "  $(CYAN)make docker-build$(NC)     Build Docker image"
+	@echo "  $(CYAN)make docker-run$(NC)       Run Docker container"
+	@echo ""
+	@echo "$(GREEN)Release:$(NC)"
+	@echo "  $(CYAN)make version$(NC)          Show current version"
+	@echo "  $(CYAN)make release V=x.y.z$(NC)  Release version x.y.z (runs checks, tags, pushes)"
+	@echo "  $(CYAN)make release-patch$(NC)    Bump patch version (0.1.0 -> 0.1.1)"
+	@echo "  $(CYAN)make release-minor$(NC)    Bump minor version (0.1.0 -> 0.2.0)"
+	@echo "  $(CYAN)make release-major$(NC)    Bump major version (0.1.0 -> 1.0.0)"
+	@echo "  $(CYAN)make publish-test$(NC)     Publish to TestPyPI"
+	@echo "  $(CYAN)make publish$(NC)          Publish to PyPI"
+	@echo ""
+	@echo "$(GREEN)Info:$(NC)"
+	@echo "  $(CYAN)make info$(NC)             Show project information"
 
-install: ## Install dependencies with Poetry
-	poetry install
+# =============================================================================
+# Setup
+# =============================================================================
 
-install-dev: ## Install dependencies including dev dependencies
-	poetry install --with dev
+install: ## Install production dependencies
+	@echo "$(CYAN)Installing production dependencies...$(NC)"
+	uv sync --no-dev
+	@echo "$(GREEN)✓ Dependencies installed$(NC)"
 
-update: ## Update dependencies
-	poetry update
+install-dev: ## Install development dependencies
+	@echo "$(CYAN)Installing development dependencies...$(NC)"
+	uv sync --extra dev
+	@echo "$(GREEN)✓ Development dependencies installed$(NC)"
 
-lock: ## Update poetry.lock
-	poetry lock --no-update
+sync: ## Install/sync dependencies with uv (recommended)
+	@echo "$(CYAN)Installing dependencies with uv...$(NC)"
+	uv sync --extra dev
+	@echo "$(GREEN)✓ Dependencies installed$(NC)"
 
+# =============================================================================
+# Code Quality
+# =============================================================================
+
+lint: ## Run linting (ruff)
+	@echo "$(CYAN)Running ruff...$(NC)"
+	uv run --with ruff ruff check app/ cli/ tests/
+	@echo "$(GREEN)✓ Linting passed$(NC)"
+
+format: ## Format code with black and ruff
+	@echo "$(CYAN)Formatting with black...$(NC)"
+	uv run --with black black app/ cli/ tests/
+	@echo "$(CYAN)Auto-fixing with ruff...$(NC)"
+	uv run --with ruff ruff check --fix app/ cli/ tests/
+	@echo "$(GREEN)✓ Code formatted$(NC)"
+
+format-check: ## Check formatting without changes
+	@echo "$(CYAN)Checking code format...$(NC)"
+	uv run --with black black --check app/ cli/ tests/
+	uv run --with ruff ruff format --check app/ cli/ tests/
+	@echo "$(GREEN)✓ Format check passed$(NC)"
+
+check: ## Run all checks (format check + lint)
+	@echo "$(CYAN)Checking code format...$(NC)"
+	uv run --with black black --check app/ cli/ tests/
+	@echo "$(CYAN)Running ruff...$(NC)"
+	uv run --with ruff ruff check app/ cli/ tests/
+	@echo "$(GREEN)✓ All checks passed$(NC)"
+
+# =============================================================================
+# Testing
+# =============================================================================
+
+test: ## Run tests with coverage
+	@echo "$(CYAN)Running tests...$(NC)"
+	uv run --with pytest --with pytest-cov pytest tests/ -v --cov=app --cov=cli --cov-report=term-missing --cov-report=xml
+	@echo "$(GREEN)✓ Tests passed$(NC)"
+
+# =============================================================================
 # Development
+# =============================================================================
+
 dev: ## Run development server
-	poetry run uvicorn app.main:app --reload --port 8000
+	@echo "$(CYAN)Starting development server...$(NC)"
+	ml-api serve --reload --port 8000
 
 worker: ## Run background worker
-	poetry run arq app.workers.worker.WorkerSettings
+	@echo "$(CYAN)Starting background worker...$(NC)"
+	uv run --with arq arq app.workers.worker.WorkerSettings
 
-shell: ## Open Python shell with project context
-	poetry run python
-
+# =============================================================================
 # Database
+# =============================================================================
+
 db-upgrade: ## Run database migrations
-	poetry run alembic upgrade head
+	@echo "$(CYAN)Running database migrations...$(NC)"
+	uv run --with alembic alembic upgrade head
+	@echo "$(GREEN)✓ Migrations complete$(NC)"
 
 db-downgrade: ## Rollback last migration
-	poetry run alembic downgrade -1
+	@echo "$(CYAN)Rolling back last migration...$(NC)"
+	uv run --with alembic alembic downgrade -1
+	@echo "$(GREEN)✓ Rollback complete$(NC)"
 
 db-migrate: ## Create new migration
 	@read -p "Enter migration message: " message; \
-	poetry run alembic revision --autogenerate -m "$$message"
+	uv run --with alembic alembic revision --autogenerate -m "$$message"
 
-db-reset: ## Reset database (WARNING: destructive)
-	poetry run alembic downgrade base
-	poetry run alembic upgrade head
+# =============================================================================
+# Build
+# =============================================================================
 
-# Testing
-test: ## Run tests
-	$(PYTEST) tests/ -v
+build: clean ## Build distribution packages
+	@echo "$(CYAN)Building distribution packages...$(NC)"
+	uv build
+	@echo "$(GREEN)✓ Build complete$(NC)"
+	@echo "$(YELLOW)Packages:$(NC)"
+	@ls -lh dist/
 
-test-cov: ## Run tests with coverage
-	$(PYTEST) tests/ --cov=app --cov=cli --cov-report=html --cov-report=term
-
-test-watch: ## Run tests in watch mode
-	$(PYTEST) tests/ -v --looponfail
-
-test-fast: ## Run tests without slow tests
-	$(PYTEST) tests/ -v -m "not slow"
-
-test-unit: ## Run unit tests only
-	$(PYTEST) tests/unit/ -v
-
-test-integration: ## Run integration tests only
-	$(PYTEST) tests/integration/ -v
-
-# Code Quality
-lint: ## Run all linters
-	$(RUFF) check app/ cli/ tests/
-	$(BLACK) --check app/ cli/ tests/
-	$(MYPY) app/ cli/
-
-format: ## Format code with Black
-	$(BLACK) app/ cli/ tests/
-
-format-check: ## Check code formatting
-	$(BLACK) --check app/ cli/ tests/
-
-ruff: ## Run Ruff linter
-	$(RUFF) check app/ cli/ tests/
-
-ruff-fix: ## Fix Ruff issues automatically
-	$(RUFF) check --fix app/ cli/ tests/
-
-mypy: ## Run type checker
-	$(MYPY) app/ cli/
-
-security: ## Run security checks
-	poetry run bandit -r app/ cli/
-	poetry run safety check
-
-pre-commit: ## Run pre-commit hooks
-	poetry run pre-commit run --all-files
-
-pre-commit-install: ## Install pre-commit hooks
-	poetry run pre-commit install
-
-# Build & Publish
-clean: ## Clean build artifacts
-	rm -rf dist/ build/ *.egg-info
-	find . -type d -name __pycache__ -exec rm -rf {} +
+clean: ## Clean build artifacts and cache
+	@echo "$(CYAN)Cleaning build artifacts...$(NC)"
+	rm -rf build/ dist/ *.egg-info .pytest_cache .ruff_cache
+	rm -rf app/__pycache__ cli/__pycache__ tests/__pycache__ **/__pycache__
+	rm -rf htmlcov/ .coverage coverage.xml
+	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 	find . -type f -name "*.pyc" -delete
-	find . -type f -name "*.pyo" -delete
-	find . -type f -name "*.coverage" -delete
-	rm -rf htmlcov/ .pytest_cache/ .mypy_cache/ .ruff_cache/
+	@echo "$(GREEN)✓ Cleaned$(NC)"
 
-build: clean ## Build package
-	poetry build
-
-publish-test: build ## Publish to Test PyPI
-	poetry publish -r testpypi
-
-publish: build ## Publish to PyPI
-	poetry publish
-
-check-package: build ## Check package before publishing
-	poetry run twine check dist/*
-
-version-patch: ## Bump patch version
-	poetry version patch
-	@echo "New version: $$(poetry version -s)"
-
-version-minor: ## Bump minor version
-	poetry version minor
-	@echo "New version: $$(poetry version -s)"
-
-version-major: ## Bump major version
-	poetry version major
-	@echo "New version: $$(poetry version -s)"
-
+# =============================================================================
 # Docker
+# =============================================================================
+
 docker-build: ## Build Docker image
+	@echo "$(CYAN)Building Docker image...$(NC)"
 	docker build -t ml-api:latest .
+	@echo "$(GREEN)✓ Docker image built$(NC)"
 
 docker-run: ## Run Docker container
+	@echo "$(CYAN)Running Docker container...$(NC)"
 	docker run -p 8000:8000 --env-file .env ml-api:latest
 
-docker-compose-up: ## Start all services with docker-compose
-	docker-compose up -d
+# =============================================================================
+# Release
+# =============================================================================
 
-docker-compose-down: ## Stop all services
-	docker-compose down
+# Show current version
+version: ## Show current version
+	@echo "Current version: $(VERSION)"
 
-docker-compose-logs: ## View docker-compose logs
-	docker-compose logs -f
+# Release a specific version: make release V=0.2.0
+release: _check-version _pre-release ## Release specific version
+	@echo "$(CYAN)Releasing version $(V)...$(NC)"
+	@# Update version in pyproject.toml
+	@sed -i.bak 's/^version = ".*"/version = "$(V)"/' pyproject.toml && rm -f pyproject.toml.bak
+	@# Update version in __init__.py
+	@sed -i.bak 's/__version__ = ".*"/__version__ = "$(V)"/' app/__init__.py && rm -f app/__init__.py.bak
+	@# Commit, tag, and push
+	git add pyproject.toml app/__init__.py
+	git commit -m "Release v$(V)"
+	git tag -a "v$(V)" -m "Release v$(V)"
+	git push origin main
+	git push origin "v$(V)"
+	@echo ""
+	@echo "$(GREEN)✓ Released v$(V)$(NC)"
+	@echo "  GitHub Actions will build and publish to PyPI"
+	@echo "  Track progress: https://github.com/$$(git remote get-url origin | sed 's/.*github.com[:/]//;s/.git$$//')/actions"
 
-docker-compose-rebuild: ## Rebuild and restart services
-	docker-compose down
-	docker-compose build
-	docker-compose up -d
+# Bump patch version (0.1.0 -> 0.1.1)
+release-patch: _pre-release ## Bump patch version
+	$(eval NEW_VERSION := $(shell echo $(VERSION) | awk -F. '{print $$1"."$$2"."$$3+1}'))
+	@echo "$(CYAN)Bumping patch version: $(VERSION) -> $(NEW_VERSION)$(NC)"
+	@$(MAKE) release V=$(NEW_VERSION) SKIP_CHECK=1
 
-# CLI
-cli-version: ## Show CLI version
-	poetry run mlapi version
+# Bump minor version (0.1.0 -> 0.2.0)
+release-minor: _pre-release ## Bump minor version
+	$(eval NEW_VERSION := $(shell echo $(VERSION) | awk -F. '{print $$1"."$$2+1".0"}'))
+	@echo "$(CYAN)Bumping minor version: $(VERSION) -> $(NEW_VERSION)$(NC)"
+	@$(MAKE) release V=$(NEW_VERSION) SKIP_CHECK=1
 
-cli-splits-list: ## List data splits
-	poetry run mlapi splits list
+# Bump major version (0.1.0 -> 1.0.0)
+release-major: _pre-release ## Bump major version
+	$(eval NEW_VERSION := $(shell echo $(VERSION) | awk -F. '{print $$1+1".0.0"}'))
+	@echo "$(CYAN)Bumping major version: $(VERSION) -> $(NEW_VERSION)$(NC)"
+	@$(MAKE) release V=$(NEW_VERSION) SKIP_CHECK=1
 
-cli-experiments-list: ## List experiments
-	poetry run mlapi experiments list
+# Pre-release checks
+_pre-release:
+ifndef SKIP_CHECK
+	@echo "$(CYAN)Running pre-release checks...$(NC)"
+	@$(MAKE) format-check
+	@$(MAKE) lint
+	@$(MAKE) test
+	@echo ""
+	@echo "$(GREEN)✓ All checks passed$(NC)"
+	@echo ""
+endif
 
-cli-models-list: ## List models
-	poetry run mlapi models list
+# Check that version is provided
+_check-version:
+ifndef V
+	$(error Version not specified. Usage: make release V=x.y.z)
+endif
+	@if ! echo "$(V)" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$$'; then \
+		echo "$(RED)Error: Invalid version format '$(V)'. Expected: x.y.z$(NC)"; \
+		exit 1; \
+	fi
 
-# GCS
-gcs-verify: ## Verify GCS connectivity
-	poetry run mlapi gcs verify
+# =============================================================================
+# Publish (Manual - usually done by GitHub Actions)
+# =============================================================================
 
-# Monitoring
-logs: ## Tail application logs
-	tail -f logs/app.log
+publish-test: build ## Publish to TestPyPI
+	@echo "$(CYAN)Publishing to TestPyPI...$(NC)"
+	uv publish --publish-url https://test.pypi.org/legacy/
+	@echo "$(GREEN)✓ Published to TestPyPI$(NC)"
+	@echo "$(YELLOW)Test installation:$(NC)"
+	@echo "pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ ml-api"
 
-metrics: ## View Prometheus metrics
-	curl http://localhost:8000/metrics
+publish: build ## Publish to PyPI (manual - normally done via GitHub Actions)
+	@echo "$(RED)Warning: This will publish to PyPI!$(NC)"
+	@echo "Normally publishing is done automatically via GitHub Actions when you push a tag."
+	@echo ""
+	@read -p "Are you sure you want to manually publish? [y/N] " confirm && [ "$$confirm" = "y" ] || exit 1
+	@echo ""
+	@echo "$(CYAN)Publishing to PyPI...$(NC)"
+	uv publish
+	@echo "$(GREEN)✓ Published to PyPI$(NC)"
 
-health: ## Check health endpoint
-	curl http://localhost:8000/healthz
+# =============================================================================
+# Info
+# =============================================================================
 
-ready: ## Check readiness endpoint
-	curl http://localhost:8000/readyz
-
-# Documentation
-docs-serve: ## Serve documentation locally (if using mkdocs)
-	@echo "Documentation in README.md and docs/"
-
-changelog: ## Update CHANGELOG.md
-	@echo "Please update CHANGELOG.md manually"
-
-# All-in-one commands
-all: install lint test build ## Install, lint, test, and build
-
-ci: lint test-cov build ## Run CI pipeline locally
-
-release-patch: version-patch changelog build ## Release patch version
-	@echo "Version bumped to $$(poetry version -s)"
-	@echo "Next steps:"
-	@echo "1. Update CHANGELOG.md"
-	@echo "2. git add -A && git commit -m 'chore: bump version to $$(poetry version -s)'"
-	@echo "3. git tag v$$(poetry version -s)"
-	@echo "4. git push && git push --tags"
-	@echo "5. Create GitHub release"
-
-release-minor: version-minor changelog build ## Release minor version
-	@echo "Version bumped to $$(poetry version -s)"
-	@echo "Follow release-patch next steps"
-
-release-major: version-major changelog build ## Release major version
-	@echo "Version bumped to $$(poetry version -s)"
-	@echo "Follow release-patch next steps"
-
-# Setup
-setup: install db-upgrade pre-commit-install ## Complete project setup
-	@echo "Setup complete! Next steps:"
-	@echo "1. Copy .env.example to .env and configure"
-	@echo "2. Start services: make docker-compose-up"
-	@echo "3. Run server: make dev"
-
-setup-dev: setup ## Setup for development
-	@echo "Development environment ready!"
-
-# Cleanup
-clean-all: clean ## Clean everything including virtual env
-	poetry env remove --all
-	rm -rf .venv/
-
-reset: clean-all install setup ## Complete reset and reinstall
-	@echo "Project reset complete!"
+info: ## Show project information
+	@echo "$(CYAN)Project Information$(NC)"
+	@echo "$(YELLOW)Name:$(NC)         ml-api"
+	@echo "$(YELLOW)Version:$(NC)      $(VERSION)"
+	@echo "$(YELLOW)Python:$(NC)       $$(python --version 2>&1)"
+	@echo "$(YELLOW)UV:$(NC)           $$(uv --version 2>&1)"
+	@echo ""
+	@echo "$(CYAN)Dependencies$(NC)"
+	@uv pip list | grep -E "(fastapi|polars|sqlalchemy|catboost|xgboost)" || echo "Run 'make sync' to install dependencies"
+	@echo ""
+	@echo "$(CYAN)Git Status$(NC)"
+	@git status --short || echo "Not a git repository"
+	@echo ""
+	@echo "$(CYAN)Available Commands$(NC)"
+	@echo "Run 'make help' for all available commands"

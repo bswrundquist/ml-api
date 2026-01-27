@@ -38,7 +38,7 @@ Paste the full error message and stack trace here
 - **ml-api version**: [e.g., 0.1.0]
 - **Python version**: [e.g., 3.10.5]
 - **OS**: [e.g., Ubuntu 22.04, macOS 14.0]
-- **Installation method**: [pip, poetry, docker]
+- **Installation method**: [pip, uv, docker]
 - **Database**: [PostgreSQL version]
 - **Redis**: [Redis version]
 

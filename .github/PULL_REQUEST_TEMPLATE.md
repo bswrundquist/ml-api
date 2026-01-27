@@ -41,7 +41,7 @@ Closes #(issue)
 ### Test Commands
 ```bash
 # Commands you ran to test
-poetry run pytest tests/
+uv run pytest tests/
 ```
 
 ## Checklist

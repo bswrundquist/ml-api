@@ -36,5 +36,5 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz')"
 
-# Default command - use mlapi serve
-CMD ["mlapi", "serve", "--host", "0.0.0.0", "--port", "8000"]
+# Default command - use ml-api serve
+CMD ["ml-api", "serve", "--host", "0.0.0.0", "--port", "8000"]

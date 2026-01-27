@@ -3,7 +3,7 @@ name = "ml-api"
 version = "0.1.0"
 description = "Production-grade ML API service with Polars, FastAPI, and GCS"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 license = {text = "MIT"}
 keywords = [
     "machine-learning",
@@ -25,8 +25,6 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Software Development :: Libraries :: Python Modules",
@@ -88,7 +86,7 @@ all = [
 ]
 
 [project.scripts]
-mlapi = "cli.main:app"
+ml-api = "cli.main:app"
 
 [build-system]
 requires = ["hatchling"]
@@ -99,14 +97,14 @@ packages = ["app", "cli"]
 
 [tool.black]
 line-length = 100
-target-version = ['py310']
+target-version = ['py312']
 
 [tool.ruff]
 line-length = 100
-target-version = "py310"
+target-version = "py312"
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.12"
 ignore_missing_imports = true
 strict_optional = true
 warn_redundant_casts = true

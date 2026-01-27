@@ -13,9 +13,7 @@ A production-ready ML API service built with FastAPI, Polars, SQLAlchemy 2.0, an
 - **Observability**: Structured logging, request tracing, and Prometheus metrics
 - **Background Jobs**: Async experiment execution with Arq (Redis-based)
 
-## Architecture
-
-### Tech Stack
+## Tech Stack
 
 - **API Framework**: FastAPI
 - **Database**: PostgreSQL with async SQLAlchemy 2.0
@@ -26,107 +24,37 @@ A production-ready ML API service built with FastAPI, Polars, SQLAlchemy 2.0, an
 - **Storage**: Google Cloud Storage
 - **Job Queue**: Arq (Redis-based)
 - **CLI**: Typer
-- **Logging**: Structlog with request_id correlation
-- **Metrics**: Prometheus
-- **Settings**: Pydantic Settings
+- **Package Manager**: uv (10-100x faster than pip)
+- **Python**: 3.12
 
-### Polars-First Data Flow
-
-```
-Input Data (JSON/CSV/Parquet)
-    ↓ (Polars)
-Data Split (train/val/test)
-    ↓ (Polars)
-Preprocessing (feature engineering, encoding)
-    ↓ (Polars → Pandas conversion logged)
-Model Training (CatBoost/XGBoost/LightGBM)
-    ↓
-Model Artifacts → GCS
-    ↓
-Prediction Request
-    ↓ (Polars)
-Preprocessing (apply saved artifacts)
-    ↓ (Polars → Pandas for model)
-Inference
-    ↓ (Polars)
-Postprocessing
-    ↓
-Response
-```
-
-**Key Principle**: Use Polars for all data manipulation. Convert to pandas ONLY when a specific ML library requires it, and log every conversion with memory estimates.
-
-### GCS Artifact Layout
-
-```
-gs://{bucket}/
-  splits/
-    {split_id}/
-      train.parquet
-      val.parquet
-      test.parquet
-  experiments/
-    {experiment_id}/
-      trials/
-        {trial_id}/
-          model.cbm (or .json for XGBoost/LightGBM)
-      best_model/
-        model.cbm
-        preprocess.json
-        postprocess.json
-        metrics.json
-        signature.json
-  models/
-    {experiment_id}/
-      v{version}/
-        model.cbm
-        preprocess.json
-        postprocess.json
-        signature.json
-```
-
-## Installation
+## Quick Start
 
 ### Prerequisites
 
-- Python 3.10+ (Python 3.10-3.11 recommended for ML libraries compatibility)
+- Python 3.12
 - PostgreSQL 14+
 - Redis 6+
 - Google Cloud Platform account with GCS bucket
 - [uv](https://github.com/astral-sh/uv) - Fast Python package installer
 
-**Note**: ML libraries (CatBoost, XGBoost, LightGBM, SHAP) are optional. Install with `.[ml]` if needed.
-
-### Setup
+### Installation
 
 ```bash
+# Install uv (if not already installed)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
 # Clone repository
 git clone <repo-url>
 cd ml-api
 
-# Install uv (if not already installed)
-curl -LsSf https://astral.sh/uv/install.sh | sh
+# Install dependencies (recommended)
+make sync
 
-# Create virtual environment and install dependencies
-uv venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+# Or manually with uv
+uv sync --extra dev
 
-# Install the package with dependencies
-uv pip install -e .
-
-# Install with ML libraries (CatBoost, XGBoost, LightGBM, SHAP, etc.)
-uv pip install -e ".[ml]"
-
-# Install development dependencies
-uv pip install -e ".[dev]"
-
-# Install everything (base + ML + dev)
-uv pip install -e ".[all]"
-
-# Copy environment file
+# Copy and configure environment
 cp .env.example .env
-
-# Edit .env with your configuration
 vim .env
 ```
 
@@ -152,91 +80,91 @@ DEFAULT_CLASSIFICATION_METRIC=auc
 DEFAULT_REGRESSION_METRIC=rmse
 ```
 
-### Database Migration
+### Run Migrations
 
 ```bash
-# Initialize database
-mlapi db init
+make db-upgrade
 
-# Run migrations
-alembic upgrade head
-
-# Or use CLI
-mlapi db upgrade
+# Or manually
+uv run --with alembic alembic upgrade head
 ```
 
-## Running the Service
-
-### Development
+### Start the API
 
 ```bash
-# Start API server with auto-reload
-mlapi serve --reload --log-level debug
+# Development (with auto-reload)
+make dev
 
-# Or use uvicorn directly
-uvicorn app.main:app --reload --port 8000
+# Or manually
+ml-api serve --reload --port 8000
+
+# Production
+ml-api serve --workers 4 --port 8000
 ```
 
-### Production
+### Start Background Worker
 
 ```bash
-# Start with CLI (recommended)
-mlapi serve --host 0.0.0.0 --port 8000 --workers 4
+make worker
 
-# With additional options
-mlapi serve \
-  --host 0.0.0.0 \
-  --port 8000 \
-  --workers 4 \
-  --proxy-headers \
-  --forwarded-allow-ips="127.0.0.1,10.0.0.0/8" \
-  --limit-max-requests 1000
-
-# With SSL
-mlapi serve \
-  --host 0.0.0.0 \
-  --port 8443 \
-  --workers 4 \
-  --ssl-keyfile /path/to/key.pem \
-  --ssl-certfile /path/to/cert.pem
-
-# Or use uvicorn directly
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
+# Or manually
+uv run --with arq arq app.workers.worker.WorkerSettings
 ```
 
-### CLI Deployment Options
+## Development Commands
 
-The `mlapi serve` command supports extensive configuration:
-
-- `--host, -h`: Bind host (default: 0.0.0.0)
-- `--port, -p`: Bind port (default: 8000)
-- `--workers, -w`: Number of worker processes (default: 1)
-- `--reload, -r`: Enable auto-reload for development
-- `--log-level, -l`: Set log level (debug, info, warning, error, critical)
-- `--access-log/--no-access-log`: Enable/disable access logs
-- `--proxy-headers`: Enable proxy headers for reverse proxy setups
-- `--forwarded-allow-ips`: Comma-separated IPs to trust for proxy headers
-- `--ssl-keyfile`: Path to SSL key file
-- `--ssl-certfile`: Path to SSL certificate file
-- `--limit-concurrency`: Maximum number of concurrent connections
-- `--limit-max-requests`: Maximum requests before worker restart
-- `--timeout-keep-alive`: Keep-alive timeout in seconds (default: 5)
-
-Run `mlapi serve --help` for all available options.
-
-### Background Workers
-
-Start Arq worker for background job processing:
+### Setup & Installation
 
 ```bash
-# Start worker
-arq app.workers.worker.WorkerSettings
+make sync             # Install dependencies with uv (recommended)
+make install          # Production dependencies only
+make install-dev      # Development dependencies
 ```
 
-### Docker Compose (Optional)
+### Code Quality
 
 ```bash
-docker-compose up -d
+make lint             # Lint with ruff
+make format           # Format with black + ruff
+make format-check     # Check formatting without changes
+make check            # All checks (format + lint)
+```
+
+### Testing
+
+```bash
+make test             # Run tests with coverage
+```
+
+### Database
+
+```bash
+make db-upgrade       # Run migrations
+make db-downgrade     # Rollback last migration
+make db-migrate       # Create new migration (will prompt for message)
+```
+
+### Build & Clean
+
+```bash
+make build            # Build distribution packages
+make clean            # Clean build artifacts
+```
+
+### Docker (Local Development)
+
+```bash
+make docker-build     # Build Docker image
+make docker-run       # Run Docker container
+docker-compose up     # Start full stack (Postgres + Redis + API)
+```
+
+### Info
+
+```bash
+make help             # Show all available commands
+make info             # Show project information
+make version          # Show current version
 ```
 
 ## API Endpoints
@@ -356,15 +284,164 @@ curl -X POST http://localhost:8000/v1/importance \
 
 ## CLI Usage
 
+The `ml-api` CLI provides comprehensive server configuration:
+
 ```bash
-# Serve the API
-mlapi serve --workers 4 --port 8000
+# Development
+ml-api serve --reload --log-level debug
 
-# Show version
-mlapi version
+# Production
+ml-api serve --host 0.0.0.0 --port 8000 --workers 4
 
-# See all commands
-mlapi --help
+# With SSL
+ml-api serve \
+  --host 0.0.0.0 \
+  --port 8443 \
+  --workers 4 \
+  --ssl-keyfile /path/to/key.pem \
+  --ssl-certfile /path/to/cert.pem
+
+# With proxy headers (for reverse proxy)
+ml-api serve \
+  --host 0.0.0.0 \
+  --port 8000 \
+  --workers 4 \
+  --proxy-headers \
+  --forwarded-allow-ips="127.0.0.1,10.0.0.0/8"
+
+# See all options
+ml-api serve --help
+```
+
+### CLI Options
+
+- `--host, -h`: Bind host (default: 0.0.0.0)
+- `--port, -p`: Bind port (default: 8000)
+- `--workers, -w`: Number of worker processes (default: 1)
+- `--reload, -r`: Enable auto-reload for development
+- `--log-level, -l`: Set log level (debug, info, warning, error, critical)
+- `--access-log/--no-access-log`: Enable/disable access logs
+- `--proxy-headers`: Enable proxy headers for reverse proxy setups
+- `--forwarded-allow-ips`: Comma-separated IPs to trust for proxy headers
+- `--ssl-keyfile`: Path to SSL key file
+- `--ssl-certfile`: Path to SSL certificate file
+- `--limit-concurrency`: Maximum number of concurrent connections
+- `--limit-max-requests`: Maximum requests before worker restart
+- `--timeout-keep-alive`: Keep-alive timeout in seconds (default: 5)
+
+## Release Process
+
+### Automated Release (Tag-Based)
+
+```bash
+# 1. Bump version and create release
+make release-patch    # 0.1.0 → 0.1.1
+make release-minor    # 0.1.0 → 0.2.0
+make release-major    # 0.1.0 → 1.0.0
+
+# Or specify exact version
+make release V=1.0.0
+
+# This automatically:
+# - Runs format-check, lint, and tests
+# - Updates pyproject.toml and app/__init__.py
+# - Creates git commit and tag
+# - Pushes to GitHub
+
+# 2. GitHub Actions automatically:
+# - Runs full test suite
+# - Builds package with uv
+# - Publishes to PyPI
+# - Creates GitHub release with changelog
+```
+
+### Manual Publishing (Testing)
+
+```bash
+# Publish to TestPyPI
+make publish-test
+
+# Publish to PyPI (manual - normally done via GitHub Actions)
+make publish
+```
+
+### GitHub Secrets Required
+
+Add to your GitHub repository settings → Secrets and variables → Actions:
+
+- `PYPI_API_TOKEN` - Get from https://pypi.org/manage/account/token/
+
+### CI/CD Workflows
+
+#### Continuous Integration (ci.yml)
+Triggers on push/PR to main/develop:
+- Lint & format check
+- Test suite with coverage (Python 3.12)
+- Security scanning
+- Package build
+
+#### Release (publish.yml)
+Triggers on tag push (v*.*.*):
+- Full test suite
+- Build package
+- Publish to PyPI with `uv publish`
+- Create GitHub release with auto-generated changelog
+
+## Architecture
+
+### Polars-First Data Flow
+
+```
+Input Data (JSON/CSV/Parquet)
+    ↓ (Polars)
+Data Split (train/val/test)
+    ↓ (Polars)
+Preprocessing (feature engineering, encoding)
+    ↓ (Polars → Pandas conversion logged)
+Model Training (CatBoost/XGBoost/LightGBM)
+    ↓
+Model Artifacts → GCS
+    ↓
+Prediction Request
+    ↓ (Polars)
+Preprocessing (apply saved artifacts)
+    ↓ (Polars → Pandas for model)
+Inference
+    ↓ (Polars)
+Postprocessing
+    ↓
+Response
+```
+
+**Key Principle**: Use Polars for all data manipulation. Convert to pandas ONLY when a specific ML library requires it, and log every conversion with memory estimates.
+
+### GCS Artifact Layout
+
+```
+gs://{bucket}/
+  splits/
+    {split_id}/
+      train.parquet
+      val.parquet
+      test.parquet
+  experiments/
+    {experiment_id}/
+      trials/
+        {trial_id}/
+          model.cbm (or .json for XGBoost/LightGBM)
+      best_model/
+        model.cbm
+        preprocess.json
+        postprocess.json
+        metrics.json
+        signature.json
+  models/
+    {experiment_id}/
+      v{version}/
+        model.cbm
+        preprocess.json
+        postprocess.json
+        signature.json
 ```
 
 ## Logging & Observability
@@ -400,66 +477,33 @@ Prometheus metrics available at `/metrics`:
 - Prediction counts
 - Training metrics
 
-## Testing
-
-```bash
-# Run all tests
-uv run pytest
-
-# Run with coverage
-uv run pytest --cov=app --cov-report=html
-
-# Run specific test file
-uv run pytest tests/test_splits.py
-
-# Run integration tests
-uv run pytest tests/integration/
-```
-
-## Development
-
-### Code Quality
-
-```bash
-# Format code
-uv run black app/ cli/ tests/
-
-# Lint
-uv run ruff check app/ cli/ tests/
-
-# Type checking
-uv run mypy app/ cli/
-```
-
-### Adding a New Model Type
-
-1. Create trainer in `app/services/training/{model}_trainer.py`
-2. Implement `ModelTrainer` protocol
-3. Add case to `dispatcher.py`
-4. Add enum value to `ModelType` in `app/db/models/experiment.py`
-5. Add tests
-
 ## Troubleshooting
 
 ### GCS Connection Issues
 
 ```bash
 # Verify credentials
-mlapi gcs verify
+gcloud auth application-default login
 
 # Check bucket permissions
 gsutil ls gs://{bucket-name}
+
+# Test with Python
+python -c "from google.cloud import storage; client = storage.Client(); print(list(client.list_buckets()))"
 ```
 
 ### Database Connection Issues
 
 ```bash
 # Test connection
-mlapi db init
+psql $DATABASE_URL
 
 # Check migrations
-alembic current
-alembic history
+make db-upgrade
+
+# Or manually
+uv run --with alembic alembic current
+uv run --with alembic alembic history
 ```
 
 ### Worker Issues
@@ -469,83 +513,75 @@ alembic history
 redis-cli ping
 
 # Monitor worker logs
-arq app.workers.worker.WorkerSettings --verbose
+uv run --with arq arq app.workers.worker.WorkerSettings --verbose
+
+# Check Redis queue
+redis-cli KEYS "arq:*"
 ```
 
-## CI/CD & Publishing
-
-This project includes complete CI/CD automation powered by **uv** for fast, efficient builds and deployments.
-
-### Quick Start
-
-1. **Add PyPI Token to GitHub Secrets**
-   - See **[GITHUB_SECRETS_SETUP.md](GITHUB_SECRETS_SETUP.md)** for detailed instructions
-   - Add `PYPI_API_TOKEN` secret to your repository
-
-2. **Create a Release**
-   ```bash
-   # Via GitHub CLI
-   gh release create v0.1.0 --title "Release v0.1.0" --notes "Initial release"
-
-   # Or via GitHub web UI: Releases → Draft a new release
-   ```
-
-3. **Automatic Publishing**
-   - GitHub Actions automatically builds and publishes to PyPI
-   - Docker images published to GitHub Container Registry
-   - Release notes updated with installation instructions
-
-### Documentation
-
-- **[GITHUB_SECRETS_SETUP.md](GITHUB_SECRETS_SETUP.md)** - PyPI token setup (start here!)
-- **[CICD_UV_MIGRATION.md](CICD_UV_MIGRATION.md)** - Complete CI/CD guide
-- **[MIGRATION_UV.md](MIGRATION_UV.md)** - Migration from Poetry to uv
-- **[UV_COMMANDS.md](UV_COMMANDS.md)** - Quick reference for uv commands
-
-### Automated Features
-
-- ✅ **Continuous Integration**: Automated testing, linting, and building on every PR (powered by uv)
-- ✅ **Automated Publishing**: One-click releases to PyPI using GitHub secrets
-- ✅ **Docker Images**: Multi-architecture builds to GitHub Container Registry
-- ✅ **Version Management**: Automated version bumping with PR creation
-- ✅ **Security Scanning**: Dependency and code security checks
-- ✅ **Fast Builds**: 10-100x faster builds with uv
-
-### Installation from PyPI
-
-Once published:
+### Dependencies Out of Sync
 
 ```bash
-# Using uv (recommended)
-uv pip install ml-api
-
-# Or using pip
-pip install ml-api
+make clean
+make sync
 ```
 
-### Development Tools
+## Adding a New Model Type
 
-```bash
-# Build the package
-uv build
+1. Create trainer in `app/services/training/{model}_trainer.py`
+2. Implement `ModelTrainer` protocol
+3. Add case to `dispatcher.py`
+4. Add enum value to `ModelType` in `app/db/models/experiment.py`
+5. Add tests in `tests/`
 
-# Install in editable mode
-uv pip install -e .
+## Project Structure
 
-# Run tests
-uv run pytest
-
-# Format code
-uv run black app/ cli/ tests/
-
-# Lint
-uv run ruff check app/ cli/ tests/
+```
+ml-api/
+├── app/                    # Main application code
+│   ├── api/               # FastAPI routes
+│   │   └── v1/           # API v1 endpoints
+│   ├── core/             # Core functionality (config, deps, logging)
+│   ├── db/               # Database models and session
+│   │   └── models/       # SQLAlchemy models
+│   ├── schemas/          # Pydantic models
+│   ├── services/         # Business logic
+│   │   ├── storage/      # GCS operations
+│   │   ├── training/     # ML training services
+│   │   └── inference/    # Prediction services
+│   ├── workers/          # Background job workers
+│   └── main.py           # FastAPI app entry point
+├── cli/                   # CLI commands
+│   └── main.py           # Typer CLI entry point
+├── tests/                 # Test suite
+│   ├── unit/             # Unit tests
+│   └── integration/      # Integration tests
+├── alembic/              # Database migrations
+├── .github/              # GitHub Actions workflows
+│   └── workflows/        # CI/CD workflows
+├── Dockerfile            # Docker image definition
+├── docker-compose.yml    # Local development stack
+├── Makefile              # Development commands
+├── pyproject.toml        # Project dependencies & config
+└── .env.example          # Example environment variables
 ```
 
 ## License
 
 MIT
 
-## Contributors
+## Contributing
 
-ML Platform Team
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Run tests and checks (`make check && make test`)
+5. Commit your changes (`git commit -m 'feat: add amazing feature'`)
+6. Push to the branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
+
+## Support
+
+For issues, questions, or contributions:
+- Create an issue: https://github.com/username/ml-api/issues
+- Check CI/CD: https://github.com/username/ml-api/actions

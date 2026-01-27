@@ -35,7 +35,7 @@ A production-ready ML API service built with FastAPI, Polars, SQLAlchemy 2.0, an
 - PostgreSQL 14+
 - Redis 6+
 - Google Cloud Platform account with GCS bucket
-- [uv](https://github.com/astral-sh/uv) - Fast Python package installer
+- [uv](https://github.com/astral-sh/uv) >= 0.7 - Fast Python package installer
 
 ### Installation
 
@@ -108,7 +108,7 @@ ml-api serve --workers 4 --port 8000
 make worker
 
 # Or manually
-uv run --with arq arq app.workers.worker.WorkerSettings
+uv run --with arq arq ml_api.workers.worker.WorkerSettings
 ```
 
 ## Development Commands
@@ -344,7 +344,7 @@ make release V=1.0.0
 
 # This automatically:
 # - Runs format-check, lint, and tests
-# - Updates pyproject.toml and app/__init__.py
+# - Bumps version using uv version --bump (updates pyproject.toml and ml_api/__init__.py)
 # - Creates git commit and tag
 # - Pushes to GitHub
 
@@ -513,7 +513,7 @@ uv run --with alembic alembic history
 redis-cli ping
 
 # Monitor worker logs
-uv run --with arq arq app.workers.worker.WorkerSettings --verbose
+uv run --with arq arq ml_api.workers.worker.WorkerSettings --verbose
 
 # Check Redis queue
 redis-cli KEYS "arq:*"

@@ -128,7 +128,7 @@ dev: ## Run development server
 
 worker: ## Run background worker
 	@echo "$(CYAN)Starting background worker...$(NC)"
-	uv run --with arq arq app.workers.worker.WorkerSettings
+	uv run --with arq arq ml_api.workers.worker.WorkerSettings
 
 # =============================================================================
 # Database
@@ -162,7 +162,7 @@ build: clean ## Build distribution packages
 clean: ## Clean build artifacts and cache
 	@echo "$(CYAN)Cleaning build artifacts...$(NC)"
 	rm -rf build/ dist/ *.egg-info .pytest_cache .ruff_cache
-	rm -rf app/__pycache__ cli/__pycache__ tests/__pycache__ **/__pycache__
+	rm -rf ml_api/__pycache__ cli/__pycache__ tests/__pycache__ **/__pycache__
 	rm -rf htmlcov/ .coverage coverage.xml
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 	find . -type f -name "*.pyc" -delete
@@ -192,12 +192,10 @@ version: ## Show current version
 # Release a specific version: make release V=0.2.0
 release: _check-version _pre-release ## Release specific version
 	@echo "$(CYAN)Releasing version $(V)...$(NC)"
-	@# Update version in pyproject.toml
-	@sed -i.bak 's/^version = ".*"/version = "$(V)"/' pyproject.toml && rm -f pyproject.toml.bak
-	@# Update version in __init__.py
-	@sed -i.bak 's/__version__ = ".*"/__version__ = "$(V)"/' app/__init__.py && rm -f app/__init__.py.bak
+	@# Update version using uv
+	uv version $(V)
 	@# Commit, tag, and push
-	git add pyproject.toml app/__init__.py
+	git add pyproject.toml ml_api/__init__.py
 	git commit -m "Release v$(V)"
 	git tag -a "v$(V)" -m "Release v$(V)"
 	git push origin main
@@ -209,21 +207,51 @@ release: _check-version _pre-release ## Release specific version
 
 # Bump patch version (0.1.0 -> 0.1.1)
 release-patch: _pre-release ## Bump patch version
-	$(eval NEW_VERSION := $(shell echo $(VERSION) | awk -F. '{print $$1"."$$2"."$$3+1}'))
-	@echo "$(CYAN)Bumping patch version: $(VERSION) -> $(NEW_VERSION)$(NC)"
-	@$(MAKE) release V=$(NEW_VERSION) SKIP_CHECK=1
+	@echo "$(CYAN)Bumping patch version: $(VERSION)$(NC)"
+	uv version --bump patch
+	$(eval NEW_VERSION := $(shell grep -m1 'version = ' pyproject.toml | cut -d'"' -f2))
+	@echo "$(CYAN)New version: $(NEW_VERSION)$(NC)"
+	git add pyproject.toml ml_api/__init__.py
+	git commit -m "Release v$(NEW_VERSION)"
+	git tag -a "v$(NEW_VERSION)" -m "Release v$(NEW_VERSION)"
+	git push origin main
+	git push origin "v$(NEW_VERSION)"
+	@echo ""
+	@echo "$(GREEN)✓ Released v$(NEW_VERSION)$(NC)"
+	@echo "  GitHub Actions will build and publish to PyPI"
+	@echo "  Track progress: https://github.com/$$(git remote get-url origin | sed 's/.*github.com[:/]//;s/.git$$//')/actions"
 
 # Bump minor version (0.1.0 -> 0.2.0)
 release-minor: _pre-release ## Bump minor version
-	$(eval NEW_VERSION := $(shell echo $(VERSION) | awk -F. '{print $$1"."$$2+1".0"}'))
-	@echo "$(CYAN)Bumping minor version: $(VERSION) -> $(NEW_VERSION)$(NC)"
-	@$(MAKE) release V=$(NEW_VERSION) SKIP_CHECK=1
+	@echo "$(CYAN)Bumping minor version: $(VERSION)$(NC)"
+	uv version --bump minor
+	$(eval NEW_VERSION := $(shell grep -m1 'version = ' pyproject.toml | cut -d'"' -f2))
+	@echo "$(CYAN)New version: $(NEW_VERSION)$(NC)"
+	git add pyproject.toml ml_api/__init__.py
+	git commit -m "Release v$(NEW_VERSION)"
+	git tag -a "v$(NEW_VERSION)" -m "Release v$(NEW_VERSION)"
+	git push origin main
+	git push origin "v$(NEW_VERSION)"
+	@echo ""
+	@echo "$(GREEN)✓ Released v$(NEW_VERSION)$(NC)"
+	@echo "  GitHub Actions will build and publish to PyPI"
+	@echo "  Track progress: https://github.com/$$(git remote get-url origin | sed 's/.*github.com[:/]//;s/.git$$//')/actions"
 
 # Bump major version (0.1.0 -> 1.0.0)
 release-major: _pre-release ## Bump major version
-	$(eval NEW_VERSION := $(shell echo $(VERSION) | awk -F. '{print $$1+1".0.0"}'))
-	@echo "$(CYAN)Bumping major version: $(VERSION) -> $(NEW_VERSION)$(NC)"
-	@$(MAKE) release V=$(NEW_VERSION) SKIP_CHECK=1
+	@echo "$(CYAN)Bumping major version: $(VERSION)$(NC)"
+	uv version --bump major
+	$(eval NEW_VERSION := $(shell grep -m1 'version = ' pyproject.toml | cut -d'"' -f2))
+	@echo "$(CYAN)New version: $(NEW_VERSION)$(NC)"
+	git add pyproject.toml ml_api/__init__.py
+	git commit -m "Release v$(NEW_VERSION)"
+	git tag -a "v$(NEW_VERSION)" -m "Release v$(NEW_VERSION)"
+	git push origin main
+	git push origin "v$(NEW_VERSION)"
+	@echo ""
+	@echo "$(GREEN)✓ Released v$(NEW_VERSION)$(NC)"
+	@echo "  GitHub Actions will build and publish to PyPI"
+	@echo "  Track progress: https://github.com/$$(git remote get-url origin | sed 's/.*github.com[:/]//;s/.git$$//')/actions"
 
 # Pre-release checks
 _pre-release:

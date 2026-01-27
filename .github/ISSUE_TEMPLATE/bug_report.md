@@ -54,7 +54,7 @@ DATABASE_URL: postgresql+asyncpg://...
 
 ```python
 # Minimal code to reproduce the issue
-from app.services.split_service import SplitService
+from ml_api.services.split_service import SplitService
 
 # Your code here
 ```

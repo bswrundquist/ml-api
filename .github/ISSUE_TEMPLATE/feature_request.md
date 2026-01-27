@@ -30,7 +30,7 @@ assignees: ''
 **Example:**
 ```python
 # How you would use this feature
-from app.services import NewService
+from ml_api.services import NewService
 
 result = NewService().new_method(...)
 ```

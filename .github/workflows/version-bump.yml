@@ -36,10 +36,14 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v3
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
 
       - name: Set up Python
-        run: uv python install 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
       - name: Configure git
         run: |
@@ -53,24 +57,22 @@ jobs:
           CURRENT_VERSION=$(grep -m1 'version = ' pyproject.toml | cut -d'"' -f2)
           echo "Current version: $CURRENT_VERSION"
 
-          # Bump version using awk (similar to Makefile)
+          # Bump version using uv
           BUMP_TYPE="${{ inputs.version }}"
 
-          # Calculate new version
           case "$BUMP_TYPE" in
-            patch)
-              NEW_VERSION=$(echo $CURRENT_VERSION | awk -F. '{print $1"."$2"."$3+1}')
+            patch|minor|major)
+              uv version --bump $BUMP_TYPE
               ;;
-            minor)
-              NEW_VERSION=$(echo $CURRENT_VERSION | awk -F. '{print $1"."$2+1".0"}')
-              ;;
-            major)
-              NEW_VERSION=$(echo $CURRENT_VERSION | awk -F. '{print $1+1".0.0"}')
-              ;;
-            pre*)
-              echo "Warning: Pre-release versions not yet supported"
-              echo "Falling back to patch bump"
-              NEW_VERSION=$(echo $CURRENT_VERSION | awk -F. '{print $1"."$2"."$3+1}')
+            prepatch|preminor|premajor|prerelease)
+              # uv version --bump supports prerelease in newer versions
+              # For now, fall back to patch bump with warning
+              echo "Warning: Pre-release versions support depends on uv version"
+              echo "Attempting: uv version --bump $BUMP_TYPE"
+              uv version --bump $BUMP_TYPE || {
+                echo "Pre-release bump not supported, falling back to patch"
+                uv version --bump patch
+              }
               ;;
             *)
               echo "Error: Invalid bump type: $BUMP_TYPE"
@@ -78,13 +80,9 @@ jobs:
               ;;
           esac
 
+          # Get new version after bump
+          NEW_VERSION=$(grep -m1 'version = ' pyproject.toml | cut -d'"' -f2)
           echo "New version: $NEW_VERSION"
-
-          # Update version in pyproject.toml
-          sed -i "s/^version = \".*\"/version = \"$NEW_VERSION\"/" pyproject.toml
-
-          # Update version in app/__init__.py
-          sed -i "s/__version__ = \".*\"/__version__ = \"$NEW_VERSION\"/" app/__init__.py
 
           # Export for later steps
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
@@ -100,7 +98,7 @@ jobs:
 
       - name: Commit changes
         run: |
-          git add pyproject.toml app/__init__.py CHANGELOG.md
+          git add pyproject.toml ml_api/__init__.py CHANGELOG.md
           git commit -m "chore: bump version to ${{ steps.bump.outputs.new_version }}"
 
       - name: Create Pull Request
@@ -116,7 +114,7 @@ jobs:
 
             ### Changes
             - Updated `pyproject.toml`
-            - Updated `app/__init__.py`
+            - Updated `ml_api/__init__.py`
             - Updated `CHANGELOG.md`
 
             ### Next Steps

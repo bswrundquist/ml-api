@@ -73,7 +73,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: arq app.workers.worker.WorkerSettings
+    command: arq ml_api.workers.worker.WorkerSettings
 
 volumes:
   postgres_data:

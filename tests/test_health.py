@@ -1,7 +1,7 @@
 """Tests for health check endpoints."""
 
 from fastapi.testclient import TestClient
-from app.main import app
+from ml_api.main import app
 
 # Create a simple test client without database dependencies
 client = TestClient(app)

@@ -86,27 +86,27 @@ sync: ## Install/sync dependencies with uv (recommended)
 
 lint: ## Run linting (ruff)
 	@echo "$(CYAN)Running ruff...$(NC)"
-	uv run --with ruff ruff check app/ cli/ tests/
+	uv run --with ruff ruff check ml_api/ tests/
 	@echo "$(GREEN)✓ Linting passed$(NC)"
 
 format: ## Format code with black and ruff
 	@echo "$(CYAN)Formatting with black...$(NC)"
-	uv run --with black black app/ cli/ tests/
+	uv run --with black black ml_api/ tests/
 	@echo "$(CYAN)Auto-fixing with ruff...$(NC)"
-	uv run --with ruff ruff check --fix app/ cli/ tests/
+	uv run --with ruff ruff check --fix ml_api/ tests/
 	@echo "$(GREEN)✓ Code formatted$(NC)"
 
 format-check: ## Check formatting without changes
 	@echo "$(CYAN)Checking code format...$(NC)"
-	uv run --with black black --check app/ cli/ tests/
-	uv run --with ruff ruff format --check app/ cli/ tests/
+	uv run --with black black --check ml_api/ tests/
+	uv run --with ruff ruff format --check ml_api/ tests/
 	@echo "$(GREEN)✓ Format check passed$(NC)"
 
 check: ## Run all checks (format check + lint)
 	@echo "$(CYAN)Checking code format...$(NC)"
-	uv run --with black black --check app/ cli/ tests/
+	uv run --with black black --check ml_api/ tests/
 	@echo "$(CYAN)Running ruff...$(NC)"
-	uv run --with ruff ruff check app/ cli/ tests/
+	uv run --with ruff ruff check ml_api/ tests/
 	@echo "$(GREEN)✓ All checks passed$(NC)"
 
 # =============================================================================
@@ -115,7 +115,7 @@ check: ## Run all checks (format check + lint)
 
 test: ## Run tests with coverage
 	@echo "$(CYAN)Running tests...$(NC)"
-	uv run pytest tests/ -v --cov=app --cov=cli --cov-report=term-missing --cov-report=xml
+	uv run pytest tests/ -v --cov=ml_api --cov-report=term-missing --cov-report=xml
 	@echo "$(GREEN)✓ Tests passed$(NC)"
 
 # =============================================================================

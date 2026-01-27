@@ -16,9 +16,9 @@ os.environ.setdefault("ENVIRONMENT", "development")
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from fastapi.testclient import TestClient
 
-from app.db.base import Base
-from app.main import app
-from app.db.session import get_db
+from ml_api.db.base import Base
+from ml_api.main import app
+from ml_api.db.session import get_db
 
 # Test database URL
 TEST_DATABASE_URL = "postgresql+asyncpg://mlapi:mlapi@localhost:5432/mlapi_test"

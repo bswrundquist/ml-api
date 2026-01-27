@@ -59,10 +59,10 @@ jobs:
         run: uv sync --extra dev
 
       - name: Lint with ruff
-        run: uv run --with ruff ruff check app/ cli/ tests/
+        run: uv run --with ruff ruff check ml_api/ tests/
 
       - name: Check formatting with black
-        run: uv run --with black black --check app/ cli/ tests/
+        run: uv run --with black black --check ml_api/ tests/
 
       - name: Run tests with coverage
         env:
@@ -77,8 +77,7 @@ jobs:
 
           # Run tests
           uv run pytest tests/ \
-            --cov=app \
-            --cov=cli \
+            --cov=ml_api \
             --cov-report=xml \
             --cov-report=term-missing \
             -v

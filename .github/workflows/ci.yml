@@ -27,13 +27,13 @@ jobs:
         run: uv sync --extra dev
 
       - name: Check code formatting with Black
-        run: uv run --with black black --check app/ cli/ tests/
+        run: uv run --with black black --check ml_api/ tests/
 
       - name: Lint with Ruff
-        run: uv run --with ruff ruff check app/ cli/ tests/
+        run: uv run --with ruff ruff check ml_api/ tests/
 
       - name: Type check with mypy
-        run: uv run --with mypy mypy app/ cli/
+        run: uv run --with mypy mypy ml_api/
         continue-on-error: true
 
   test:
@@ -94,8 +94,7 @@ jobs:
 
           # Run tests
           uv run pytest tests/ \
-            --cov=app \
-            --cov=cli \
+            --cov=ml_api \
             --cov-report=xml \
             --cov-report=term-missing \
             -v

@@ -1,5 +1,6 @@
 """Dataset I/O operations using Polars (primary) with explicit pandas conversion when needed."""
-from typing import Tuple, Optional
+
+from typing import Tuple
 import tempfile
 from pathlib import Path
 
@@ -71,7 +72,9 @@ def save_dataset_to_gcs(
         # Write to temp file then upload
         with tempfile.NamedTemporaryFile(suffix=".parquet", delete=False) as tmp:
             df.write_parquet(tmp.name)
-            uri = gcs_client.upload_file(blob_path, tmp.name, content_type="application/octet-stream")
+            uri = gcs_client.upload_file(
+                blob_path, tmp.name, content_type="application/octet-stream"
+            )
             Path(tmp.name).unlink()
 
         logger.info("save_dataset_completed", uri=uri)
@@ -110,7 +113,9 @@ def split_dataset(
         raise DataProcessingError(f"Failed to split dataset: {str(e)}")
 
 
-def _split_random(df: pl.DataFrame, params: dict) -> Tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame]:
+def _split_random(
+    df: pl.DataFrame, params: dict
+) -> Tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame]:
     """Random split using Polars."""
     train_ratio = params.get("train_ratio", 0.7)
     val_ratio = params.get("val_ratio", 0.15)
@@ -143,7 +148,9 @@ def _split_random(df: pl.DataFrame, params: dict) -> Tuple[pl.DataFrame, pl.Data
     return train_df, val_df, test_df
 
 
-def _split_time_based(df: pl.DataFrame, params: dict) -> Tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame]:
+def _split_time_based(
+    df: pl.DataFrame, params: dict
+) -> Tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame]:
     """Time-based split using Polars."""
     time_column = params.get("time_column")
     if not time_column:
@@ -176,7 +183,9 @@ def _split_time_based(df: pl.DataFrame, params: dict) -> Tuple[pl.DataFrame, pl.
     return train_df, val_df, test_df
 
 
-def _split_entity_based(df: pl.DataFrame, params: dict) -> Tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame]:
+def _split_entity_based(
+    df: pl.DataFrame, params: dict
+) -> Tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame]:
     """Entity-based (group) split using Polars."""
     entity_column = params.get("entity_column")
     if not entity_column:

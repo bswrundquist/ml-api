@@ -1,6 +1,6 @@
 """Model artifact I/O to/from GCS."""
+
 import tempfile
-import pickle
 from pathlib import Path
 from typing import Any, Dict, Tuple
 from uuid import UUID
@@ -41,28 +41,30 @@ def save_model_artifacts(
         base_path = f"models/{experiment_id}/v{version}"
 
         # Save model binary
-        with tempfile.NamedTemporaryFile(suffix=get_model_extension(model_type), delete=False) as tmp:
+        with tempfile.NamedTemporaryFile(
+            suffix=get_model_extension(model_type), delete=False
+        ) as tmp:
             trainer.save_model(model, tmp.name)
-            model_uri = gcs_client.upload_file(
+            gcs_client.upload_file(
                 f"{base_path}/model{get_model_extension(model_type)}",
                 tmp.name,
             )
             Path(tmp.name).unlink()
 
         # Save preprocessing artifacts
-        preprocess_uri = gcs_client.upload_json(
+        gcs_client.upload_json(
             f"{base_path}/preprocess.json",
             preprocess_artifacts,
         )
 
         # Save postprocessing config
-        postprocess_uri = gcs_client.upload_json(
+        gcs_client.upload_json(
             f"{base_path}/postprocess.json",
             postprocess_config,
         )
 
         # Save metrics
-        metrics_uri = gcs_client.upload_json(
+        gcs_client.upload_json(
             f"{base_path}/metrics.json",
             metrics,
         )
@@ -73,7 +75,7 @@ def save_model_artifacts(
             "task_type": task_type,
             "model_type": model_type,
         }
-        signature_uri = gcs_client.upload_json(
+        gcs_client.upload_json(
             f"{base_path}/signature.json",
             signature,
         )
@@ -120,7 +122,9 @@ def load_model_artifacts(
 
         # Load model binary
         model_path = f"{base_path}/model{get_model_extension(model_type)}"
-        with tempfile.NamedTemporaryFile(suffix=get_model_extension(model_type), delete=False) as tmp:
+        with tempfile.NamedTemporaryFile(
+            suffix=get_model_extension(model_type), delete=False
+        ) as tmp:
             gcs_client.download_to_file(model_path, tmp.name)
             model = trainer.load_model(tmp.name, task_type)
             Path(tmp.name).unlink()
@@ -168,9 +172,11 @@ def save_trial_artifacts(
         base_path = f"experiments/{experiment_id}/trials/{trial_number}"
 
         # Save model binary
-        with tempfile.NamedTemporaryFile(suffix=get_model_extension(model_type), delete=False) as tmp:
+        with tempfile.NamedTemporaryFile(
+            suffix=get_model_extension(model_type), delete=False
+        ) as tmp:
             trainer.save_model(model, tmp.name)
-            model_uri = gcs_client.upload_file(
+            gcs_client.upload_file(
                 f"{base_path}/model{get_model_extension(model_type)}",
                 tmp.name,
             )

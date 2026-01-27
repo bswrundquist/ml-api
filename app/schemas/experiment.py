@@ -1,4 +1,5 @@
 """Experiment schemas."""
+
 from typing import Optional
 from datetime import datetime
 from uuid import UUID
@@ -30,8 +31,12 @@ class ExperimentCreate(BaseModel):
     feature_columns: list[str] = Field(..., description="Feature column names", min_length=1)
     task_type: TaskType = Field(..., description="Task type (classification/regression)")
     model_type: ModelType = Field(ModelType.CATBOOST, description="Model type")
-    metric_name: Optional[str] = Field(None, description="Metric to optimize (auto-selected if not provided)")
-    optuna_config: OptunaConfig = Field(default_factory=OptunaConfig, description="Optuna configuration")
+    metric_name: Optional[str] = Field(
+        None, description="Metric to optimize (auto-selected if not provided)"
+    )
+    optuna_config: OptunaConfig = Field(
+        default_factory=OptunaConfig, description="Optuna configuration"
+    )
     preprocess_config: Optional[dict] = Field(None, description="Preprocessing configuration")
     postprocess_config: Optional[dict] = Field(None, description="Postprocessing configuration")
 

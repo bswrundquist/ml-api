@@ -1,4 +1,5 @@
 """Structured logging with request_id correlation and traceability."""
+
 import sys
 import uuid
 import logging
@@ -63,14 +64,12 @@ def configure_logging() -> None:
 
     if settings.is_development:
         # Pretty console output for development
-        processors = shared_processors + [
-            structlog.dev.ConsoleRenderer()
-        ]
+        processors = shared_processors + [structlog.dev.ConsoleRenderer()]
     else:
         # JSON output for production
         processors = shared_processors + [
             structlog.processors.format_exc_info,
-            structlog.processors.JSONRenderer()
+            structlog.processors.JSONRenderer(),
         ]
 
     structlog.configure(
@@ -125,36 +124,22 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
         return response
 
 
-def log_function_call(
-    logger: structlog.stdlib.BoundLogger,
-    function_name: str,
-    **kwargs
-) -> None:
+def log_function_call(logger: structlog.stdlib.BoundLogger, function_name: str, **kwargs) -> None:
     """Log function call with parameters (redacting sensitive data)."""
     safe_kwargs = {k: v for k, v in kwargs.items() if not _is_sensitive_field(k)}
     logger.info(f"{function_name}_started", **safe_kwargs)
 
 
 def log_function_result(
-    logger: structlog.stdlib.BoundLogger,
-    function_name: str,
-    duration_ms: float,
-    **kwargs
+    logger: structlog.stdlib.BoundLogger, function_name: str, duration_ms: float, **kwargs
 ) -> None:
     """Log function result with duration."""
     safe_kwargs = {k: v for k, v in kwargs.items() if not _is_sensitive_field(k)}
-    logger.info(
-        f"{function_name}_completed",
-        duration_ms=duration_ms,
-        **safe_kwargs
-    )
+    logger.info(f"{function_name}_completed", duration_ms=duration_ms, **safe_kwargs)
 
 
 def log_exception(
-    logger: structlog.stdlib.BoundLogger,
-    exc: Exception,
-    context: str = "",
-    **kwargs
+    logger: structlog.stdlib.BoundLogger, exc: Exception, context: str = "", **kwargs
 ) -> None:
     """Log exception with context and stack trace."""
     safe_kwargs = {k: v for k, v in kwargs.items() if not _is_sensitive_field(k)}
@@ -171,18 +156,21 @@ def log_exception(
 def _is_sensitive_field(field_name: str) -> bool:
     """Check if field name indicates sensitive data."""
     sensitive_patterns = [
-        "password", "secret", "token", "key", "credential",
-        "auth", "api_key", "private"
+        "password",
+        "secret",
+        "token",
+        "key",
+        "credential",
+        "auth",
+        "api_key",
+        "private",
     ]
     field_lower = field_name.lower()
     return any(pattern in field_lower for pattern in sensitive_patterns)
 
 
 def log_dataframe_info(
-    logger: structlog.stdlib.BoundLogger,
-    df_name: str,
-    df: Any,
-    context: str = ""
+    logger: structlog.stdlib.BoundLogger, df_name: str, df: Any, context: str = ""
 ) -> None:
     """Log dataframe metadata without logging raw data."""
     import polars as pl
@@ -201,6 +189,7 @@ def log_dataframe_info(
     else:
         # Fallback for pandas or other types
         import pandas as pd
+
         if isinstance(df, pd.DataFrame):
             logger.info(
                 "dataframe_info",
@@ -222,7 +211,7 @@ def log_conversion(
     rows: int,
     cols: int,
     memory_before_mb: float,
-    memory_after_mb: float
+    memory_after_mb: float,
 ) -> None:
     """Log explicit dataframe type conversions."""
     logger.warning(

@@ -1,10 +1,9 @@
 """CatBoost model trainer (default)."""
+
 from typing import Any, Tuple
-import tempfile
-from pathlib import Path
 
 import numpy as np
-from catboost import CatBoostClassifier, CatBoostRegressor, Pool
+from catboost import CatBoostClassifier, CatBoostRegressor
 from sklearn.metrics import roc_auc_score, mean_squared_error, mean_absolute_error, accuracy_score
 
 from app.core.logging import get_logger
@@ -109,14 +108,11 @@ class CatBoostTrainer:
         feature_names = model.feature_names_
 
         importance_dict = {
-            name: float(importance)
-            for name, importance in zip(feature_names, importance_values)
+            name: float(importance) for name, importance in zip(feature_names, importance_values)
         }
 
         # Sort by importance
-        sorted_importance = dict(
-            sorted(importance_dict.items(), key=lambda x: x[1], reverse=True)
-        )
+        sorted_importance = dict(sorted(importance_dict.items(), key=lambda x: x[1], reverse=True))
 
         return sorted_importance
 

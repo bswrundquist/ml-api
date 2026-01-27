@@ -1,4 +1,5 @@
 """Typer CLI application for ML API."""
+
 import typer
 from typing import Optional
 import uvicorn
@@ -16,15 +17,29 @@ def serve(
     port: int = typer.Option(8000, "--port", "-p", help="Bind port"),
     workers: int = typer.Option(1, "--workers", "-w", help="Number of worker processes"),
     reload: bool = typer.Option(False, "--reload", "-r", help="Enable auto-reload"),
-    log_level: str = typer.Option("info", "--log-level", "-l", help="Log level (debug, info, warning, error, critical)"),
+    log_level: str = typer.Option(
+        "info", "--log-level", "-l", help="Log level (debug, info, warning, error, critical)"
+    ),
     access_log: bool = typer.Option(True, "--access-log/--no-access-log", help="Enable access log"),
-    proxy_headers: bool = typer.Option(False, "--proxy-headers", help="Enable proxy headers (for reverse proxy setups)"),
-    forwarded_allow_ips: Optional[str] = typer.Option(None, "--forwarded-allow-ips", help="Comma-separated list of IPs to trust for proxy headers"),
+    proxy_headers: bool = typer.Option(
+        False, "--proxy-headers", help="Enable proxy headers (for reverse proxy setups)"
+    ),
+    forwarded_allow_ips: Optional[str] = typer.Option(
+        None, "--forwarded-allow-ips", help="Comma-separated list of IPs to trust for proxy headers"
+    ),
     ssl_keyfile: Optional[str] = typer.Option(None, "--ssl-keyfile", help="Path to SSL key file"),
-    ssl_certfile: Optional[str] = typer.Option(None, "--ssl-certfile", help="Path to SSL certificate file"),
-    limit_concurrency: Optional[int] = typer.Option(None, "--limit-concurrency", help="Maximum number of concurrent connections"),
-    limit_max_requests: Optional[int] = typer.Option(None, "--limit-max-requests", help="Maximum number of requests before worker restart"),
-    timeout_keep_alive: int = typer.Option(5, "--timeout-keep-alive", help="Keep-alive timeout in seconds"),
+    ssl_certfile: Optional[str] = typer.Option(
+        None, "--ssl-certfile", help="Path to SSL certificate file"
+    ),
+    limit_concurrency: Optional[int] = typer.Option(
+        None, "--limit-concurrency", help="Maximum number of concurrent connections"
+    ),
+    limit_max_requests: Optional[int] = typer.Option(
+        None, "--limit-max-requests", help="Maximum number of requests before worker restart"
+    ),
+    timeout_keep_alive: int = typer.Option(
+        5, "--timeout-keep-alive", help="Keep-alive timeout in seconds"
+    ),
 ):
     """
     Start the ML API server with uvicorn.
@@ -55,7 +70,9 @@ def serve(
     if workers > 1:
         uvicorn_config["workers"] = workers
         if reload:
-            typer.echo("Warning: --reload is not compatible with multiple workers. Disabling reload.")
+            typer.echo(
+                "Warning: --reload is not compatible with multiple workers. Disabling reload."
+            )
             reload = False
 
     if reload:

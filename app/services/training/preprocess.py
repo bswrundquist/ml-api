@@ -1,4 +1,5 @@
 """Preprocessing operations using Polars."""
+
 from typing import Tuple, Optional
 import polars as pl
 
@@ -62,7 +63,9 @@ def preprocess_features(
                     X = X.with_columns(pl.col(col).fill_null(mean_val))
 
         # Encode categorical features
-        categorical_cols = [col for col in X.columns if X[col].dtype == pl.Utf8 or X[col].dtype == pl.Categorical]
+        categorical_cols = [
+            col for col in X.columns if X[col].dtype == pl.Utf8 or X[col].dtype == pl.Categorical
+        ]
 
         if categorical_cols:
             logger.info("encoding_categoricals", cols=categorical_cols)
@@ -75,9 +78,7 @@ def preprocess_features(
                 category_maps[col] = category_map
 
                 # Apply mapping
-                X = X.with_columns(
-                    pl.col(col).map_dict(category_map, default=-1).alias(col)
-                )
+                X = X.with_columns(pl.col(col).map_dict(category_map, default=-1).alias(col))
 
             artifacts["category_maps"] = category_maps
 
@@ -87,7 +88,7 @@ def preprocess_features(
                 # Remaining string columns -> cast to int if possible
                 try:
                     X = X.with_columns(pl.col(col).cast(pl.Float64))
-                except:
+                except Exception:
                     logger.warning("could_not_cast_to_numeric", col=col)
 
         log_dataframe_info(logger, "X_after_preprocessing", X)
@@ -115,16 +116,14 @@ def apply_preprocessing(
         category_maps = artifacts.get("category_maps", {})
         for col, category_map in category_maps.items():
             if col in X.columns:
-                X = X.with_columns(
-                    pl.col(col).map_dict(category_map, default=-1).alias(col)
-                )
+                X = X.with_columns(pl.col(col).map_dict(category_map, default=-1).alias(col))
 
         # Cast types
         for col in X.columns:
             if X[col].dtype == pl.Utf8:
                 try:
                     X = X.with_columns(pl.col(col).cast(pl.Float64))
-                except:
+                except Exception:
                     pass
 
         logger.info("apply_preprocessing_completed", rows=len(X), cols=len(X.columns))

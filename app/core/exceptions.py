@@ -1,4 +1,5 @@
 """Custom exceptions and error handlers."""
+
 from typing import Any
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
@@ -78,7 +79,9 @@ class ExternalServiceError(MLAPIException):
 class JobError(MLAPIException):
     """Background job error."""
 
-    def __init__(self, message: str, job_id: str | None = None, details: dict[str, Any] | None = None):
+    def __init__(
+        self, message: str, job_id: str | None = None, details: dict[str, Any] | None = None
+    ):
         super().__init__(
             message=message,
             code="job_error",
@@ -153,7 +156,9 @@ async def mlapi_exception_handler(request: Request, exc: MLAPIException) -> JSON
     )
 
 
-async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+async def validation_exception_handler(
+    request: Request, exc: RequestValidationError
+) -> JSONResponse:
     """Handle Pydantic validation errors."""
     request_id = getattr(request.state, "request_id", "unknown")
 

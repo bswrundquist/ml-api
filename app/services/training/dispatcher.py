@@ -1,6 +1,6 @@
 """Training dispatcher with match/case for task_type and model_type."""
+
 from typing import Any, Tuple, Protocol
-import polars as pl
 
 from app.core.logging import get_logger
 from app.core.exceptions import ValidationError
@@ -52,20 +52,22 @@ def get_trainer(model_type: str, task_type: str) -> "ModelTrainer":
     match model_type:
         case ModelType.CATBOOST:
             from app.services.training.catboost_trainer import CatBoostTrainer
+
             trainer = CatBoostTrainer()
 
         case ModelType.XGBOOST:
             from app.services.training.xgboost_trainer import XGBoostTrainer
+
             trainer = XGBoostTrainer()
 
         case ModelType.LIGHTGBM:
             from app.services.training.lightgbm_trainer import LightGBMTrainer
+
             trainer = LightGBMTrainer()
 
         case _:
             raise ValidationError(
-                f"Unsupported model type: {model_type}",
-                {"model_type": model_type}
+                f"Unsupported model type: {model_type}", {"model_type": model_type}
             )
 
     # Validate task type
@@ -73,10 +75,7 @@ def get_trainer(model_type: str, task_type: str) -> "ModelTrainer":
         case TaskType.CLASSIFICATION | TaskType.REGRESSION:
             pass
         case _:
-            raise ValidationError(
-                f"Unsupported task type: {task_type}",
-                {"task_type": task_type}
-            )
+            raise ValidationError(f"Unsupported task type: {task_type}", {"task_type": task_type})
 
     logger.info("trainer_dispatched", trainer=type(trainer).__name__)
     return trainer

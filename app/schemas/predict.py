@@ -1,4 +1,5 @@
 """Prediction schemas."""
+
 from typing import Optional, Any
 from uuid import UUID
 
@@ -29,7 +30,9 @@ class PredictResponse(BaseModel):
     """Schema for prediction response."""
 
     predictions: list[Any]
-    probabilities: Optional[list[list[float]]] = Field(None, description="Class probabilities (classification only)")
+    probabilities: Optional[list[list[float]]] = Field(
+        None, description="Class probabilities (classification only)"
+    )
     model_id: UUID
     model_version: int
     model_type: str

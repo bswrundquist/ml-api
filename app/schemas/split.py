@@ -1,4 +1,5 @@
 """Data split schemas."""
+
 from typing import Optional
 from datetime import datetime
 from uuid import UUID
@@ -12,12 +13,14 @@ class DataSplitCreate(BaseModel):
     """Schema for creating a data split."""
 
     entity_id: str = Field(..., description="Entity identifier")
-    dataset_uri: Optional[str] = Field(None, description="URI to dataset (if not providing inline data)")
+    dataset_uri: Optional[str] = Field(
+        None, description="URI to dataset (if not providing inline data)"
+    )
     inline_data: Optional[list[dict]] = Field(None, description="Inline data rows")
     split_strategy: SplitStrategy = Field(SplitStrategy.RANDOM, description="Split strategy")
     split_params: dict = Field(
         default_factory=dict,
-        description="Split parameters (e.g., {'train_ratio': 0.7, 'val_ratio': 0.15, 'test_ratio': 0.15, 'seed': 42})"
+        description="Split parameters (e.g., {'train_ratio': 0.7, 'val_ratio': 0.15, 'test_ratio': 0.15, 'seed': 42})",
     )
 
     model_config = ConfigDict(use_enum_values=True)

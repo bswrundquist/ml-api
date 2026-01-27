@@ -1,4 +1,5 @@
 """Data split API routes."""
+
 from uuid import UUID
 from typing import Optional
 
@@ -7,10 +8,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
 from app.core.logging import get_logger
-from app.core.exceptions import ResourceNotFoundError, ValidationError
+from app.core.exceptions import ResourceNotFoundError
 from app.db.session import get_db
 from app.db.models.split import DataSplit, SplitStatus
-from app.schemas.split import DataSplitCreate, DataSplitUpdate, DataSplitResponse, DataSplitListResponse
+from app.schemas.split import (
+    DataSplitCreate,
+    DataSplitUpdate,
+    DataSplitResponse,
+    DataSplitListResponse,
+)
 from app.services.split_service import SplitService
 from app.clients import get_gcs_client
 
@@ -23,6 +29,7 @@ def get_split_service(
 ) -> SplitService:
     """Get split service dependency."""
     from app.services.split_service import SplitService
+
     return SplitService(db, get_gcs_client())
 
 
@@ -57,9 +64,7 @@ async def get_split(
     """Get data split by ID."""
     logger.info("get_split_request", split_id=str(split_id))
 
-    result = await db.execute(
-        select(DataSplit).where(DataSplit.id == split_id)
-    )
+    result = await db.execute(select(DataSplit).where(DataSplit.id == split_id))
     split = result.scalar_one_or_none()
 
     if not split:
@@ -125,9 +130,7 @@ async def update_split(
     """Update data split metadata (safe operations only)."""
     logger.info("update_split_request", split_id=str(split_id))
 
-    result = await db.execute(
-        select(DataSplit).where(DataSplit.id == split_id)
-    )
+    result = await db.execute(select(DataSplit).where(DataSplit.id == split_id))
     split = result.scalar_one_or_none()
 
     if not split:
@@ -161,9 +164,7 @@ async def delete_split(
         delete_artifacts=delete_artifacts,
     )
 
-    result = await db.execute(
-        select(DataSplit).where(DataSplit.id == split_id)
-    )
+    result = await db.execute(select(DataSplit).where(DataSplit.id == split_id))
     split = result.scalar_one_or_none()
 
     if not split:

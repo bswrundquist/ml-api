@@ -1,4 +1,5 @@
 """Main FastAPI application."""
+
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -19,7 +20,10 @@ from app.core.telemetry import MetricsMiddleware, get_metrics
 from app.db.session import init_db, close_db
 
 # Import routes
-from app.api.routes import splits, experiments, predict, importance, models, health
+from app.api.routes import splits, health
+
+# TODO: Create these route modules
+# from app.api.routes import experiments, predict, importance, models
 
 logger = get_logger(__name__)
 
@@ -76,10 +80,11 @@ app.add_exception_handler(Exception, general_exception_handler)
 # Include routers
 app.include_router(health.router, tags=["Health"])
 app.include_router(splits.router, prefix="/v1", tags=["Data Splits"])
-app.include_router(experiments.router, prefix="/v1", tags=["Experiments"])
-app.include_router(models.router, prefix="/v1", tags=["Models"])
-app.include_router(predict.router, prefix="/v1", tags=["Predictions"])
-app.include_router(importance.router, prefix="/v1", tags=["Feature Importance"])
+# TODO: Create these route modules and uncomment
+# app.include_router(experiments.router, prefix="/v1", tags=["Experiments"])
+# app.include_router(models.router, prefix="/v1", tags=["Models"])
+# app.include_router(predict.router, prefix="/v1", tags=["Predictions"])
+# app.include_router(importance.router, prefix="/v1", tags=["Feature Importance"])
 
 
 @app.get("/metrics")

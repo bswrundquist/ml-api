@@ -36,6 +36,7 @@ dependencies = [
     "sqlalchemy>=2.0.25",
     "alembic>=1.13.1",
     "asyncpg>=0.29.0",
+    "greenlet>=3.0.0",  # Required for async SQLAlchemy
     "psycopg2-binary>=2.9.9",
     "pydantic>=2.5.3",
     "pydantic-settings>=2.1.0",
@@ -102,6 +103,16 @@ target-version = ['py312']
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+
+[tool.ruff.lint]
+# Ignore F403 (import *) in Alembic migrations, it's standard pattern
+# Ignore F841 (unused variable) - often used for readability or future use
+# Ignore E722 (bare except) when Exception handling is too broad
+ignore = ["F841"]
+
+[tool.ruff.lint.per-file-ignores]
+# Alembic migrations use import * pattern
+"app/db/migrations/env.py" = ["F403", "F405"]
 
 [tool.mypy]
 python_version = "3.12"

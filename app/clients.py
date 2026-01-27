@@ -1,6 +1,6 @@
 """External clients for GCS and other services."""
+
 from typing import Optional
-from io import BytesIO
 import json
 
 from google.cloud import storage
@@ -44,7 +44,9 @@ class GCSClient:
                 raise ExternalServiceError("GCS", f"Failed to initialize client: {str(e)}")
         return self._bucket
 
-    def upload_bytes(self, blob_path: str, data: bytes, content_type: str = "application/octet-stream") -> str:
+    def upload_bytes(
+        self, blob_path: str, data: bytes, content_type: str = "application/octet-stream"
+    ) -> str:
         """Upload bytes to GCS."""
         try:
             logger.info(
@@ -64,7 +66,9 @@ class GCSClient:
             logger.error("gcs_upload_failed", blob_path=blob_path, error=str(e))
             raise ExternalServiceError("GCS", f"Upload failed: {str(e)}", {"blob_path": blob_path})
 
-    def upload_file(self, blob_path: str, file_path: str, content_type: str = "application/octet-stream") -> str:
+    def upload_file(
+        self, blob_path: str, file_path: str, content_type: str = "application/octet-stream"
+    ) -> str:
         """Upload file to GCS."""
         try:
             logger.info("gcs_upload_file_started", blob_path=blob_path, file_path=file_path)
@@ -93,10 +97,14 @@ class GCSClient:
 
         except NotFound:
             logger.error("gcs_blob_not_found", blob_path=blob_path)
-            raise ExternalServiceError("GCS", f"Blob not found: {blob_path}", {"blob_path": blob_path})
+            raise ExternalServiceError(
+                "GCS", f"Blob not found: {blob_path}", {"blob_path": blob_path}
+            )
         except Exception as e:
             logger.error("gcs_download_failed", blob_path=blob_path, error=str(e))
-            raise ExternalServiceError("GCS", f"Download failed: {str(e)}", {"blob_path": blob_path})
+            raise ExternalServiceError(
+                "GCS", f"Download failed: {str(e)}", {"blob_path": blob_path}
+            )
 
     def download_to_file(self, blob_path: str, file_path: str) -> None:
         """Download blob to file."""
@@ -110,10 +118,14 @@ class GCSClient:
 
         except NotFound:
             logger.error("gcs_blob_not_found", blob_path=blob_path)
-            raise ExternalServiceError("GCS", f"Blob not found: {blob_path}", {"blob_path": blob_path})
+            raise ExternalServiceError(
+                "GCS", f"Blob not found: {blob_path}", {"blob_path": blob_path}
+            )
         except Exception as e:
             logger.error("gcs_download_to_file_failed", blob_path=blob_path, error=str(e))
-            raise ExternalServiceError("GCS", f"Download failed: {str(e)}", {"blob_path": blob_path})
+            raise ExternalServiceError(
+                "GCS", f"Download failed: {str(e)}", {"blob_path": blob_path}
+            )
 
     def upload_json(self, blob_path: str, data: dict) -> str:
         """Upload JSON data to GCS."""

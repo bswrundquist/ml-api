@@ -1,4 +1,5 @@
 """Application configuration using Pydantic Settings."""
+
 from typing import Literal
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -8,10 +9,7 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
     model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        case_sensitive=False,
-        extra="ignore"
+        env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"
     )
 
     # Application
@@ -34,9 +32,7 @@ class Settings(BaseSettings):
     # Google Cloud Storage
     gcs_bucket: str = Field(..., description="GCS bucket for artifacts")
     gcs_project_id: str = Field(..., description="GCP project ID")
-    google_application_credentials: str = Field(
-        ..., description="Path to GCP service account key"
-    )
+    google_application_credentials: str = Field(..., description="Path to GCP service account key")
 
     # Redis (for Arq background jobs)
     redis_url: str = "redis://localhost:6379/0"

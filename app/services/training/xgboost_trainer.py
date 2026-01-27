@@ -1,4 +1,5 @@
 """XGBoost model trainer."""
+
 from typing import Any, Tuple
 import numpy as np
 import xgboost as xgb
@@ -98,9 +99,7 @@ class XGBoostTrainer:
         return {
             name: float(imp)
             for name, imp in sorted(
-                zip(feature_names, importance),
-                key=lambda x: x[1],
-                reverse=True
+                zip(feature_names, importance), key=lambda x: x[1], reverse=True
             )
         }
 

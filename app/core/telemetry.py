@@ -1,10 +1,11 @@
 """Telemetry and metrics collection."""
+
 from typing import Callable
 from functools import wraps
 import time
 
 from prometheus_client import Counter, Histogram, Gauge, CollectorRegistry, generate_latest
-from fastapi import Request, Response
+from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.config import settings
@@ -137,6 +138,7 @@ class MetricsMiddleware(BaseHTTPMiddleware):
 
 def track_prediction(model_type: str, task_type: str):
     """Decorator to track prediction metrics."""
+
     def decorator(func: Callable):
         @wraps(func)
         async def wrapper(*args, **kwargs):
@@ -156,11 +158,13 @@ def track_prediction(model_type: str, task_type: str):
                 prediction_duration_seconds.labels(model_type=model_type).observe(duration)
 
         return wrapper
+
     return decorator
 
 
 def track_training_trial(model_type: str, task_type: str):
     """Context manager to track training trial metrics."""
+
     class TrainingTrialTracker:
         def __enter__(self):
             if settings.enable_metrics:

@@ -1,7 +1,7 @@
 """Database base configuration."""
+
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy import MetaData
-
 
 # Naming convention for constraints
 NAMING_CONVENTION = {
@@ -17,4 +17,5 @@ metadata = MetaData(naming_convention=NAMING_CONVENTION)
 
 class Base(DeclarativeBase):
     """Base class for all database models."""
+
     metadata = metadata

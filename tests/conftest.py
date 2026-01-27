@@ -1,19 +1,54 @@
 """Pytest fixtures and configuration."""
+
+import os
 import pytest
 import asyncio
 from typing import AsyncGenerator, Generator
 
+# Set test environment variables BEFORE importing app modules
+os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://mlapi:mlapi@localhost:5432/mlapi_test")
+os.environ.setdefault("GCS_BUCKET", "test-bucket")
+os.environ.setdefault("GCS_PROJECT_ID", "test-project")
+os.environ.setdefault("GOOGLE_APPLICATION_CREDENTIALS", "/tmp/fake-gcp-key.json")
+os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
+os.environ.setdefault("ENVIRONMENT", "development")
+
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from fastapi.testclient import TestClient
 
-from app.core.config import settings
 from app.db.base import Base
 from app.main import app
 from app.db.session import get_db
 
-
 # Test database URL
 TEST_DATABASE_URL = "postgresql+asyncpg://mlapi:mlapi@localhost:5432/mlapi_test"
+
+
+# Create fake GCP credentials file for tests
+def setup_fake_gcp_credentials():
+    """Create a fake GCP credentials file for testing."""
+    import json
+
+    fake_creds = {
+        "type": "service_account",
+        "project_id": "test-project",
+        "private_key_id": "test-key-id",
+        "private_key": "-----BEGIN RSA PRIVATE KEY-----\ntest\n-----END RSA PRIVATE KEY-----\n",
+        "client_email": "test@test-project.iam.gserviceaccount.com",
+        "client_id": "123456789",
+        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+        "token_uri": "https://oauth2.googleapis.com/token",
+    }
+
+    creds_path = "/tmp/fake-gcp-key.json"
+    with open(creds_path, "w") as f:
+        json.dump(fake_creds, f)
+
+    return creds_path
+
+
+# Set up fake credentials before tests run
+setup_fake_gcp_credentials()
 
 
 @pytest.fixture(scope="session")
@@ -108,11 +143,13 @@ def fake_gcs_client():
 
         def upload_json(self, blob_path: str, data: dict) -> str:
             import json
+
             json_bytes = json.dumps(data).encode("utf-8")
             return self.upload_bytes(blob_path, json_bytes, "application/json")
 
         def download_json(self, blob_path: str) -> dict:
             import json
+
             data = self.download_bytes(blob_path)
             return json.loads(data.decode("utf-8"))
 

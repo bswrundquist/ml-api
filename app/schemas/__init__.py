@@ -1,4 +1,5 @@
 """Pydantic schemas for request/response validation."""
+
 from app.schemas.split import (
     DataSplitCreate,
     DataSplitUpdate,

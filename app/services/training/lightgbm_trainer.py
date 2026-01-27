@@ -1,4 +1,5 @@
 """LightGBM model trainer."""
+
 from typing import Any, Tuple
 import numpy as np
 import lightgbm as lgb
@@ -101,9 +102,7 @@ class LightGBMTrainer:
         return {
             name: float(imp)
             for name, imp in sorted(
-                zip(feature_names, importance),
-                key=lambda x: x[1],
-                reverse=True
+                zip(feature_names, importance), key=lambda x: x[1], reverse=True
             )
         }
 

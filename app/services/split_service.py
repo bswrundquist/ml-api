@@ -1,6 +1,6 @@
 """Data split service implementation."""
+
 import time
-from datetime import datetime
 from uuid import uuid4
 
 from sqlalchemy.ext.asyncio import AsyncSession

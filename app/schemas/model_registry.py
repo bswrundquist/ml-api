@@ -1,4 +1,5 @@
 """Model registry schemas."""
+
 from typing import Optional
 from datetime import datetime
 from uuid import UUID

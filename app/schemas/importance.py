@@ -1,5 +1,6 @@
 """Feature importance schemas."""
-from typing import Optional, Any
+
+from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field, ConfigDict
@@ -23,7 +24,7 @@ class ImportanceRequest(BaseModel):
     max_samples: int = Field(1000, description="Max samples for SHAP", ge=1, le=10000)
     method_preference: list[str] = Field(
         default_factory=lambda: ["shap", "native", "permutation"],
-        description="Preference order for importance methods"
+        description="Preference order for importance methods",
     )
 
     model_config = ConfigDict(use_enum_values=True)

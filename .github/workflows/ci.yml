@@ -23,14 +23,11 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install dependencies
-        run: uv sync --extra dev
-
       - name: Check code formatting with Black
-        run: uv run --with black black --check ml_api/ tests/
+        run: make format-check
 
       - name: Lint with Ruff
-        run: uv run --with ruff ruff check ml_api/ tests/
+        run: make lint
 
       - name: Type check with mypy
         run: uv run --with mypy mypy ml_api/
@@ -78,9 +75,6 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install dependencies
-        run: uv sync --extra dev
-
       - name: Run tests with coverage
         env:
           DATABASE_URL: postgresql+asyncpg://mlapi:mlapi@localhost:5432/mlapi_test
@@ -93,11 +87,7 @@ jobs:
           echo '{"type": "service_account", "project_id": "test"}' > /tmp/fake-gcp-key.json
 
           # Run tests
-          uv run pytest tests/ \
-            --cov=ml_api \
-            --cov-report=xml \
-            --cov-report=term-missing \
-            -v
+          make test
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
@@ -123,9 +113,6 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install dependencies
-        run: uv sync
-
       - name: Check for security vulnerabilities
         run: |
           uv run --with safety safety check --stdin < <(uv pip freeze)
@@ -133,7 +120,7 @@ jobs:
 
       - name: Run Bandit security linter
         run: |
-          uv run --with bandit bandit -r app/ cli/ -f json -o bandit-report.json
+          uv run --with bandit bandit -r ml_api/ -f json -o bandit-report.json
         continue-on-error: true
 
       - name: Upload Bandit report
@@ -161,7 +148,7 @@ jobs:
           python-version: "3.12"
 
       - name: Build package
-        run: uv build
+        run: make build
 
       - name: Check package metadata
         run: |

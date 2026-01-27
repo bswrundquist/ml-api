@@ -115,7 +115,7 @@ check: ## Run all checks (format check + lint)
 
 test: ## Run tests with coverage
 	@echo "$(CYAN)Running tests...$(NC)"
-	uv run --with pytest --with pytest-cov --with pytest-asyncio --with httpx pytest tests/ -v --cov=app --cov=cli --cov-report=term-missing --cov-report=xml
+	uv run pytest tests/ -v --cov=app --cov=cli --cov-report=term-missing --cov-report=xml
 	@echo "$(GREEN)✓ Tests passed$(NC)"
 
 # =============================================================================

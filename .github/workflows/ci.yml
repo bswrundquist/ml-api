@@ -93,7 +93,7 @@ jobs:
           echo '{"type": "service_account", "project_id": "test"}' > /tmp/fake-gcp-key.json
 
           # Run tests
-          uv run --with pytest --with pytest-cov --with pytest-asyncio --with httpx pytest tests/ \
+          uv run pytest tests/ \
             --cov=app \
             --cov=cli \
             --cov-report=xml \

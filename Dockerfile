@@ -1,4 +1,4 @@
-FROM python:3.10-slim
+FROM python:3.12-slim
 
 WORKDIR /app
 
@@ -20,8 +20,7 @@ COPY pyproject.toml ./
 RUN uv pip install --system -e .
 
 # Copy application code
-COPY app/ ./app/
-COPY cli/ ./cli/
+COPY ml_api/ ./ml_api/
 
 # Create a non-root user
 RUN useradd -m -u 1000 appuser && \

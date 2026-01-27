@@ -84,8 +84,8 @@ jobs:
 
       - name: Test CLI installation
         run: |
-          ml-api --help
-          ml-api serve --help
+          uv run ml-api --help
+          uv run ml-api serve --help
 
   # ===========================================================================
   # Build & Publish to PyPI

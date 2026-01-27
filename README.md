@@ -96,10 +96,10 @@ uv run --with alembic alembic upgrade head
 make dev
 
 # Or manually
-ml-api serve --reload --port 8000
+uv run ml-api serve --reload --port 8000
 
 # Production
-ml-api serve --workers 4 --port 8000
+uv run ml-api serve --workers 4 --port 8000
 ```
 
 ### Start Background Worker
@@ -288,13 +288,13 @@ The `ml-api` CLI provides comprehensive server configuration:
 
 ```bash
 # Development
-ml-api serve --reload --log-level debug
+uv run ml-api serve --reload --log-level debug
 
 # Production
-ml-api serve --host 0.0.0.0 --port 8000 --workers 4
+uv run ml-api serve --host 0.0.0.0 --port 8000 --workers 4
 
 # With SSL
-ml-api serve \
+uv run ml-api serve \
   --host 0.0.0.0 \
   --port 8443 \
   --workers 4 \
@@ -302,7 +302,7 @@ ml-api serve \
   --ssl-certfile /path/to/cert.pem
 
 # With proxy headers (for reverse proxy)
-ml-api serve \
+uv run ml-api serve \
   --host 0.0.0.0 \
   --port 8000 \
   --workers 4 \
@@ -310,7 +310,7 @@ ml-api serve \
   --forwarded-allow-ips="127.0.0.1,10.0.0.0/8"
 
 # See all options
-ml-api serve --help
+uv run ml-api serve --help
 ```
 
 ### CLI Options

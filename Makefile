@@ -124,7 +124,7 @@ test: ## Run tests with coverage
 
 dev: ## Run development server
 	@echo "$(CYAN)Starting development server...$(NC)"
-	ml-api serve --reload --port 8000
+	uv run ml-api serve --reload --port 8000
 
 worker: ## Run background worker
 	@echo "$(CYAN)Starting background worker...$(NC)"

@@ -208,50 +208,50 @@ release: _check-version _pre-release ## Release specific version
 # Bump patch version (0.1.0 -> 0.1.1)
 release-patch: _pre-release ## Bump patch version
 	@echo "$(CYAN)Bumping patch version: $(VERSION)$(NC)"
-	uv version --bump patch
-	$(eval NEW_VERSION := $(shell grep -m1 'version = ' pyproject.toml | cut -d'"' -f2))
-	@echo "$(CYAN)New version: $(NEW_VERSION)$(NC)"
-	git add pyproject.toml ml_api/__init__.py
-	git commit -m "Release v$(NEW_VERSION)"
-	git tag -a "v$(NEW_VERSION)" -m "Release v$(NEW_VERSION)"
-	git push origin main
-	git push origin "v$(NEW_VERSION)"
-	@echo ""
-	@echo "$(GREEN)✓ Released v$(NEW_VERSION)$(NC)"
-	@echo "  GitHub Actions will build and publish to PyPI"
-	@echo "  Track progress: https://github.com/$$(git remote get-url origin | sed 's/.*github.com[:/]//;s/.git$$//')/actions"
+	@uv version --bump patch
+	@NEW_VERSION=$$(grep -m1 'version = ' pyproject.toml | cut -d'"' -f2); \
+	echo "$(CYAN)New version: $$NEW_VERSION$(NC)"; \
+	git add pyproject.toml ml_api/__init__.py; \
+	git commit -m "Release v$$NEW_VERSION"; \
+	git tag -a "v$$NEW_VERSION" -m "Release v$$NEW_VERSION"; \
+	git push origin main; \
+	git push origin "v$$NEW_VERSION"; \
+	echo ""; \
+	echo "$(GREEN)✓ Released v$$NEW_VERSION$(NC)"; \
+	echo "  GitHub Actions will build and publish to PyPI"; \
+	echo "  Track progress: https://github.com/$$(git remote get-url origin | sed 's/.*github.com[:/]//;s/.git$$//')/actions"
 
 # Bump minor version (0.1.0 -> 0.2.0)
 release-minor: _pre-release ## Bump minor version
 	@echo "$(CYAN)Bumping minor version: $(VERSION)$(NC)"
-	uv version --bump minor
-	$(eval NEW_VERSION := $(shell grep -m1 'version = ' pyproject.toml | cut -d'"' -f2))
-	@echo "$(CYAN)New version: $(NEW_VERSION)$(NC)"
-	git add pyproject.toml ml_api/__init__.py
-	git commit -m "Release v$(NEW_VERSION)"
-	git tag -a "v$(NEW_VERSION)" -m "Release v$(NEW_VERSION)"
-	git push origin main
-	git push origin "v$(NEW_VERSION)"
-	@echo ""
-	@echo "$(GREEN)✓ Released v$(NEW_VERSION)$(NC)"
-	@echo "  GitHub Actions will build and publish to PyPI"
-	@echo "  Track progress: https://github.com/$$(git remote get-url origin | sed 's/.*github.com[:/]//;s/.git$$//')/actions"
+	@uv version --bump minor
+	@NEW_VERSION=$$(grep -m1 'version = ' pyproject.toml | cut -d'"' -f2); \
+	echo "$(CYAN)New version: $$NEW_VERSION$(NC)"; \
+	git add pyproject.toml ml_api/__init__.py; \
+	git commit -m "Release v$$NEW_VERSION"; \
+	git tag -a "v$$NEW_VERSION" -m "Release v$$NEW_VERSION"; \
+	git push origin main; \
+	git push origin "v$$NEW_VERSION"; \
+	echo ""; \
+	echo "$(GREEN)✓ Released v$$NEW_VERSION$(NC)"; \
+	echo "  GitHub Actions will build and publish to PyPI"; \
+	echo "  Track progress: https://github.com/$$(git remote get-url origin | sed 's/.*github.com[:/]//;s/.git$$//')/actions"
 
 # Bump major version (0.1.0 -> 1.0.0)
 release-major: _pre-release ## Bump major version
 	@echo "$(CYAN)Bumping major version: $(VERSION)$(NC)"
-	uv version --bump major
-	$(eval NEW_VERSION := $(shell grep -m1 'version = ' pyproject.toml | cut -d'"' -f2))
-	@echo "$(CYAN)New version: $(NEW_VERSION)$(NC)"
-	git add pyproject.toml ml_api/__init__.py
-	git commit -m "Release v$(NEW_VERSION)"
-	git tag -a "v$(NEW_VERSION)" -m "Release v$(NEW_VERSION)"
-	git push origin main
-	git push origin "v$(NEW_VERSION)"
-	@echo ""
-	@echo "$(GREEN)✓ Released v$(NEW_VERSION)$(NC)"
-	@echo "  GitHub Actions will build and publish to PyPI"
-	@echo "  Track progress: https://github.com/$$(git remote get-url origin | sed 's/.*github.com[:/]//;s/.git$$//')/actions"
+	@uv version --bump major
+	@NEW_VERSION=$$(grep -m1 'version = ' pyproject.toml | cut -d'"' -f2); \
+	echo "$(CYAN)New version: $$NEW_VERSION$(NC)"; \
+	git add pyproject.toml ml_api/__init__.py; \
+	git commit -m "Release v$$NEW_VERSION"; \
+	git tag -a "v$$NEW_VERSION" -m "Release v$$NEW_VERSION"; \
+	git push origin main; \
+	git push origin "v$$NEW_VERSION"; \
+	echo ""; \
+	echo "$(GREEN)✓ Released v$$NEW_VERSION$(NC)"; \
+	echo "  GitHub Actions will build and publish to PyPI"; \
+	echo "  Track progress: https://github.com/$$(git remote get-url origin | sed 's/.*github.com[:/]//;s/.git$$//')/actions"
 
 # Pre-release checks
 _pre-release:

@@ -1,5 +1,5 @@
 [project]
-name = "ml-api"
+name = "bswr-ml-api"
 version = "0.1.0"
 description = "Production-grade ML API service with Polars, FastAPI, and GCS"
 readme = "README.md"
@@ -83,7 +83,7 @@ dev = [
 ]
 
 all = [
-    "ml-api[ml,dev]",
+    "bswr-ml-api[ml,dev]",
 ]
 
 [project.scripts]
